@@ -8,4 +8,6 @@ db.sqlite
 .swiftpm
 
 
-Private/
+# APNs
+Resources/APNs.p8
+Resources/json/settings.json
