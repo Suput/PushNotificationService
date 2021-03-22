@@ -24,7 +24,7 @@ struct APNsConfiguration: Content {
         
         let directory = DirectoryConfiguration.detect()
                 let fileURL = URL(fileURLWithPath: directory.workingDirectory)
-                    .appendingPathComponent("Resources/json", isDirectory: true)
+                    .appendingPathComponent("Private/json", isDirectory: true)
                     .appendingPathComponent("settings.json", isDirectory: false)
         
         guard

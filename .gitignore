@@ -9,5 +9,4 @@ db.sqlite
 
 
 # APNs
-Resources/APNs.p8
-Resources/json/settings.json
+Private/
