@@ -9,7 +9,7 @@ public func configure(_ app: Application) throws {
     if let config = APNsConfiguration.loadSettings() {
         app.apns.configuration = try .init(
             authenticationMethod: .jwt(
-                key: .private(filePath: "Resources/APNs.p8"),
+                key: .private(filePath: "Private/APNs.p8"),
                 keyIdentifier: JWKIdentifier(string: config.apns.keyIdentifier),
                 teamIdentifier: config.apns.teamIdentifier
             ),
