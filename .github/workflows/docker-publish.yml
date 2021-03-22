@@ -25,19 +25,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Create Resources folder
+        run: |
+          mkdir Resources
+          mkdir Resources/json/
       
       - name: Create settings.json
-        uses: finnp/create-file-action@1.0.0
-        env:
-            FILE_NAME: "Resources/json/settings.json"
-            FILE_DATA: ${{ Action.SETTING_JSON }}
+        run: echo ${{ secrets.SETTING_JSON }} > Resources/json/settings.json
             
-      - name: Create settings.json
-        uses: finnp/create-file-action@1.0.0
-        env:
-            FILE_NAME: "Resources/APNs.p8"
-            FILE_DATA: ${{ Action.APNS }}
-            
+      - name: Create APNs.p8
+        run: echo ${{ secrets.APNS }} > Resources/APNs.p8
+
       - name: Run tests
         run: |
           if [ -f docker-compose.test.yml ]; then
