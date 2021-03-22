@@ -14,7 +14,7 @@ public func configure(_ app: Application) throws {
                 keyIdentifier: JWKIdentifier(string: config.apns.keyIdentifier),
                 teamIdentifier: config.apns.teamIdentifier
             ),
-            topic: "test",
+            topic: config.apns.topic,
             environment: .sandbox
         )
     }
@@ -29,6 +29,7 @@ struct APNsConfiguration: Content {
     struct APNsKey: Content {
         let keyIdentifier: String
         let teamIdentifier: String
+        let topic: String
     }
     
     public static func loadSettings() -> APNsConfiguration? {
@@ -49,3 +50,5 @@ struct APNsConfiguration: Content {
         return persone
     }
 }
+
+
