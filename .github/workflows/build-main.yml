@@ -1,4 +1,4 @@
-name: ITLab-Push Notification
+name: Deploy
 
 on:
   push:
@@ -10,40 +10,17 @@ on:
     tags:
       - v*
 
-  # Run tests for any PRs.
-  pull_request:
-
 env:
   # TODO: Change variable to your image's name.
   IMAGE_NAME: image
 
 jobs:
-  # Run tests.
-  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
-  Test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Run tests
-        run: |
-          if [ -f docker-compose.test.yml ]; then
-            docker-compose --file docker-compose.test.yml build
-            docker-compose --file docker-compose.test.yml run sut
-          else
-            docker build . --file Dockerfile
-          fi
-
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
-  push:
+  Push:
     # Ensure test job passes before pushing image.
-    needs: Test
-
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-
+    
     steps:
       - uses: actions/checkout@v2
 
