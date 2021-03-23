@@ -7,19 +7,15 @@
 
 import Vapor
 
-struct APNsConfiguration: Content {
+struct ConfigurationService: Content {
     
     let apns: APNsKey
     
     let testDevice: String
     
-    struct APNsKey: Content {
-        let keyIdentifier: String
-        let teamIdentifier: String
-        let topic: String
-    }
-    
-    public static func loadSettings() -> APNsConfiguration? {
+    let database: DatabasesSetting
+   
+    public static func loadSettings() -> ConfigurationService? {
         let decoder = JSONDecoder()
         
         let directory = DirectoryConfiguration.detect()
@@ -29,11 +25,26 @@ struct APNsConfiguration: Content {
         
         guard
             let data = try? Data(contentsOf: fileURL),
-            let persone = try? decoder.decode(APNsConfiguration.self, from: data)
+            let persone = try? decoder.decode(ConfigurationService.self, from: data)
         else {
             return nil
         }
 
         return persone
+    }
+}
+
+extension ConfigurationService {
+    struct APNsKey: Content {
+        let keyIdentifier: String
+        let teamIdentifier: String
+        let topic: String
+    }
+    
+    struct DatabasesSetting: Content {
+        let hostname: String
+        let login: String
+        let password: String
+        let databaseName: String
     }
 }
