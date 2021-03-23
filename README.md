@@ -40,3 +40,5 @@ docker-compose up
 --- | ---
 Vapor | https://github.com/vapor/vapor/
 Vapor APNs | https://github.com/vapor/apns.git
+Fluent | https://github.com/vapor/fluent
+Fluent PostgreSQL | https://github.com/vapor/fluent-postgres-driver
