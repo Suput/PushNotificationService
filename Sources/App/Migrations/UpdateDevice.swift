@@ -10,7 +10,7 @@ import Fluent
 struct UpdateDevice: Migration {
     func prepare(on database: Database) -> EventLoopFuture<Void> {
         database.schema("devices")
-            .field("user_id", .uuid, .references("user", .id))
+            .field("user_id", .uuid, .references("users", .id))
             .update()
     }
 

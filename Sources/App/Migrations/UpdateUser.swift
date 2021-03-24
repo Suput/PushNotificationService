@@ -9,14 +9,14 @@ import Fluent
 
 struct UpdateUser: Migration {
     func prepare(on database: Database) -> EventLoopFuture<Void> {
-        database.schema("user")
+        database.schema("users")
             .field("devices_id", .uuid, .references("devices", .id))
             .update()
     }
 
     // Optionally reverts the changes made in the prepare method.
     func revert(on database: Database) -> EventLoopFuture<Void> {
-        database.schema("user")
+        database.schema("users")
             .deleteField("devices_id")
             .update()
     }

@@ -27,3 +27,9 @@ final class UserDevices: Model, Content {
     }
 }
 
+struct UserDevicesClient: Content {
+    let id: UUID
+    let device: DeviceClient
+}
+
+

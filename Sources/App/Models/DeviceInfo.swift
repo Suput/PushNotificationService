@@ -40,5 +40,16 @@ final class DeviceInfo: Content, Model {
         self.id = id
         self.type = type
         self.deviceID = deviceID
+//        self.user = nil
     }
+    
+    init(device client: DeviceClient) {
+        self.type = client.type
+        self.deviceID = client.deviceID
+    }
+}
+
+struct DeviceClient: Content {
+    let deviceID: String
+    let type: DeviceInfo.DeviceType
 }
