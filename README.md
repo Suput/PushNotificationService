@@ -27,7 +27,7 @@ vapor run serve
 ```
 Сервер будет доступен по `127.0.0.1:8080`
 
-### Doker
+### Docker
 
 ```docker
 docker-compose build
