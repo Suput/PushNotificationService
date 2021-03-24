@@ -34,5 +34,8 @@ public func configure(_ app: Application) throws {
 
 
 fileprivate func migration(_ app: Application) {
-    app.migrations.add(CreateGalaxy())
+    app.migrations.add(CreateDevice())
+    app.migrations.add(CreateUser())
+    app.migrations.add(UpdateDevice())
+    app.migrations.add(UpdateUser())
 }
