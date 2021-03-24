@@ -30,41 +30,52 @@ final class DeviceController {
         ).map { .ok }
     }
     
-    func registrateDevice(_ req: Request) throws -> EventLoopFuture<UserDevices> {
+    func registrateDevice(_ req: Request) throws -> EventLoopFuture<UserDevicesServer> {
         let user = try req.content.decode(UserDevicesClient.self)
         
-        let findDevice = UserDevices.query(on: req.db).filter(\.$id == user.id).first()
-        return findDevice
-            .flatMap { u -> EventLoopFuture<UserDevices> in
+        let userD = UserDevices(id: user.id)
+        
+        return userD.save(on: req.db).flatMap { () -> EventLoopFuture<UserDevicesServer> in
+            return DeviceInfo.query(on: req.db).filter(\.$deviceID == user.device.deviceID).first().flatMap { d -> EventLoopFuture<UserDevicesServer> in
                 
-                if u == nil {
-                    let newUser = UserDevices()
-                    newUser.id = user.id
-                    
-                    return newUser.create(on: req.db).flatMap { () -> EventLoopFuture<UserDevices> in
-                        let device = DeviceInfo(device: user.device)
-                        return newUser.$devices.create(device, on: req.db).map {newUser}
-                    }
-                }
-                return u!.$devices.query(on: req.db).filter(\.$deviceID == user.device.deviceID).first().flatMap {
-                    d -> EventLoopFuture<UserDevices> in
-                    
-                    if d == nil {
-                        let device = DeviceInfo(device: user.device)
-                        return u!.$devices.create(device, on: req.db).map {u!}
-                    }
-                    
-                    return u!.update(on: req.db).map {u!}
+                if d != nil {
+                    return Abort(.loopDetected) as! EventLoopFuture<UserDevicesServer>
                 }
                 
+                let device = DeviceInfo(type: user.device.type, deviceID:  user.device.deviceID, user: UserDevices(id: user.id))
+                
+                return device.create(on: req.db).flatMap { () -> EventLoopFuture<UserDevicesServer> in
+                    
+                    return DeviceInfo.query(on: req.db).filter(\.$deviceID == user.device.deviceID).first().map
+                    { d -> UserDevicesServer in
+                        
+                        return UserDevicesServer(id: user.id, devices: nil, device: DeviceServer(id: d!.id!, deviceID: d!.deviceID, type: d!.type))
+                    }
+                }
             }
+        }
     }
     
     func dropUsers(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
         return UserDevices.query(on: req.db).delete().map{.ok}
     }
     
-    func getUsers(_ req: Request) throws -> EventLoopFuture<[UserDevices]> {
-        UserDevices.query(on: req.db).all()
+    func getUsers(_ req: Request) throws -> EventLoopFuture<[UserDevicesServer]> {
+        
+        var users: [UserDevicesServer] = []
+        
+        return DeviceInfo.query(on: req.db).all().map { d -> [UserDevicesServer] in
+            
+            for element in d {
+                
+                if let i = users.firstIndex(where: {$0.id == element.user.id}) {
+                    users[i].devices!.append(DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type))
+                } else {
+                    users.append(UserDevicesServer(id: element.$user.id, devices: [DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type)]))
+                }
+            }
+            
+            return users
+        }
     }
 }

@@ -14,7 +14,7 @@ struct PushTest: Content {
 }
 
 
-final class DeviceInfo: Content, Model {
+final class DeviceInfo: Model {
     
     enum DeviceType: String, Codable {
         case andorid, ios
@@ -25,8 +25,8 @@ final class DeviceInfo: Content, Model {
     @ID(key: .id)
     var id: UUID?
     
-    @OptionalParent(key: "user_id")
-    var user: UserDevices?
+    @Parent(key: "user_id")
+    var user: UserDevices
     
     @Enum(key: "type")
     var type: DeviceType
@@ -36,11 +36,10 @@ final class DeviceInfo: Content, Model {
     
     init() {}
     
-    init(id: UUID?, type: DeviceType, deviceID: String) {
-        self.id = id
+    init(type: DeviceType, deviceID: String, user: UserDevices) {
         self.type = type
         self.deviceID = deviceID
-//        self.user = nil
+        self.$user.id = user.id!
     }
     
     init(device client: DeviceClient) {
@@ -49,7 +48,4 @@ final class DeviceInfo: Content, Model {
     }
 }
 
-struct DeviceClient: Content {
-    let deviceID: String
-    let type: DeviceInfo.DeviceType
-}
+
