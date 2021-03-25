@@ -55,7 +55,7 @@ final class DeviceController {
                 if device.type == .ios {
                    task.append(
                         req.apns.send(
-                            .init(title: push.push.title, subtitle: push.push.message),
+                            .init(title: push.push.title, subtitle: nil, body: push.push.message),
                             to: device.deviceID
                         ))
                 }
