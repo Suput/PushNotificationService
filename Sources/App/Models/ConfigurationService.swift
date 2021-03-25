@@ -11,7 +11,7 @@ struct ConfigurationService: Content {
     
     let apns: APNsKey
     
-    let testDevice: String
+    let testDevice: String?
     
     let database: DatabasesSetting
    

@@ -16,18 +16,25 @@ final class DeviceController {
         
         app.get("users", use: getUsers)
         
-        app.delete("dropUsers", use: dropUsers)
+        // TODO: test
+        if app.environment == .development {
+            app.delete("drop", use: dropDB)
+        }
     }
     
     func testPush(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
         let push = try req.content.decode(PushTest.self)
         
-        let config = ConfigurationService.loadSettings()
+        guard let config = ConfigurationService.loadSettings(),
+              let deviceID = config.testDevice else {
+            return req.eventLoop.makeFailedFuture(Abort(.custom(code: 404, reasonPhrase: "Not found deviceID")))
+        }
         
         return req.apns.send(
             .init(title: push.title, subtitle: push.message),
-            to: config!.testDevice
+            to: deviceID
         ).map { .ok }
+        
     }
     
     func registrateDevice(_ req: Request) throws -> EventLoopFuture<UserDevicesServer> {
@@ -47,7 +54,7 @@ final class DeviceController {
                                 return UserDevicesServer(id: device.$user.id, devices: nil, device: deviceResult)
                                 
                             }
-                    
+                            
                             var devicesResult: [DeviceServer] = []
                             d.forEach { e in
                                 devicesResult.append(DeviceServer(id: e.id!, deviceID: e.deviceID, type: e.type))
@@ -58,7 +65,7 @@ final class DeviceController {
                             
                         }
                     }
-            
+                    
                     return req.eventLoop.makeSucceededVoidFuture().map { () -> UserDevicesServer in
                         var devicesResult: [DeviceServer] = []
                         
@@ -89,8 +96,10 @@ final class DeviceController {
         }
     }
     
-    func dropUsers(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
-        return UserDevices.query(on: req.db).delete().map{.ok}
+    func dropDB(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        return DeviceInfo.query(on: req.db).delete().flatMap {() -> EventLoopFuture<HTTPStatus> in
+            return UserDevices.query(on: req.db).delete().map {.ok}
+        }
     }
     
     func getUsers(_ req: Request) throws -> EventLoopFuture<[UserDevicesServer]> {
