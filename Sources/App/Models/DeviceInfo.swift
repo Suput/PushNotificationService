@@ -8,12 +8,6 @@
 import Vapor
 import Fluent
 
-struct PushTest: Content {
-    let title: String
-    let message: String
-}
-
-
 final class DeviceInfo: Model {
     
     enum DeviceType: String, Codable {

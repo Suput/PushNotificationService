@@ -12,6 +12,8 @@ final class DeviceController {
     init(_ app: Application) {
         app.post("test-push", use: testPush)
         
+        app.post("push", use: push)
+        
         app.post("addDevice", use: registrateDevice)
         
         app.get("users", use: getUsers)
@@ -23,7 +25,7 @@ final class DeviceController {
     }
     
     func testPush(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
-        let push = try req.content.decode(PushTest.self)
+        let push = try req.content.decode(PushMessage.self)
         
         guard let config = ConfigurationService.loadSettings(),
               let deviceID = config.testDevice else {
@@ -37,8 +39,35 @@ final class DeviceController {
         
     }
     
+    func push(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        let push = try req.content.decode(PushClient.self)
+        
+        return DeviceInfo.query(on: req.db).filter(\.$user.$id == push.userId).all().flatMap { (devices) -> EventLoopFuture<HTTPStatus> in
+            if devices.isEmpty {
+                return req.eventLoop.makeFailedFuture(Abort(.custom(code: 404, reasonPhrase: "The user with the identifier \(push.userId) does not exist, or there are no devices attached to it")))
+            }
+            
+            var task: [EventLoopFuture<Void>] = []
+            
+            devices.forEach { device in
+                if device.type == .ios {
+                   task.append(
+                        req.apns.send(
+                            .init(title: push.push.title, subtitle: push.push.message),
+                            to: device.deviceID
+                        ))
+                }
+            }
+            
+            return req.eventLoop.makeSucceededVoidFuture().fold(task) { (t, t1) -> EventLoopFuture<Void> in
+                return req.eventLoop.makeSucceededVoidFuture()
+            }.transform(to: HTTPStatus.ok)
+            
+        }
+    }
+    
     func registrateDevice(_ req: Request) throws -> EventLoopFuture<UserDevicesServer> {
-        let user = try req.content.decode(UserDevicesClient.self)
+        let user = try req.content.decode(AddUserDevicesClient.self)
         
         return UserDevices.query(on: req.db).filter(\.$id == user.id).first().flatMap{ u -> EventLoopFuture<UserDevicesServer> in
             if let userDB = u {
