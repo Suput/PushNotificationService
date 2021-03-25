@@ -17,7 +17,7 @@ struct PushTest: Content {
 final class DeviceInfo: Model {
     
     enum DeviceType: String, Codable {
-        case andorid, ios
+        case android, ios
     }
     
     static let schema = "devices"
