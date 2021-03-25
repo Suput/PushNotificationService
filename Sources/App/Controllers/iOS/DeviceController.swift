@@ -34,11 +34,11 @@ final class DeviceController {
         let user = try req.content.decode(UserDevicesClient.self)
         
         return UserDevices.query(on: req.db).filter(\.$id == user.id).first().flatMap{ u -> EventLoopFuture<UserDevicesServer> in
-            if let uuid = u?.id {
-                return DeviceInfo.query(on: req.db).filter(\.$user.$id == uuid).all().flatMap { d -> EventLoopFuture<UserDevicesServer> in
+            if let userDB = u {
+                return DeviceInfo.query(on: req.db).filter(\.$user.$id == userDB.id!).all().flatMap { d -> EventLoopFuture<UserDevicesServer> in
                     
                     if d.isEmpty || !(d.contains(where: {$0.deviceID == user.device.deviceID})) {
-                        let device = DeviceInfo(type: user.device.type, deviceID: user.device.deviceID, user: u!)
+                        let device = DeviceInfo(type: user.device.type, deviceID: user.device.deviceID, user: userDB)
                         
                         return device.save(on: req.db).map { () -> UserDevicesServer in
                             if d.isEmpty {
@@ -66,7 +66,7 @@ final class DeviceController {
                             devicesResult.append(DeviceServer(id: e.id!, deviceID: e.deviceID, type: e.type))
                         }
                         
-                        return UserDevicesServer(id: uuid, devices: devicesResult, device: nil)
+                        return UserDevicesServer(id: userDB.id!, devices: devicesResult, device: nil)
                         
                     }
                 }
