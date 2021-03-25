@@ -1,6 +1,7 @@
 import Vapor
 import JWTKit
 import APNS
+import JWT
 
 import Fluent
 import FluentPostgresDriver
