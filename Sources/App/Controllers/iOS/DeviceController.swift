@@ -33,24 +33,57 @@ final class DeviceController {
     func registrateDevice(_ req: Request) throws -> EventLoopFuture<UserDevicesServer> {
         let user = try req.content.decode(UserDevicesClient.self)
         
-        let userD = UserDevices(id: user.id)
-        
-        return userD.save(on: req.db).flatMap { () -> EventLoopFuture<UserDevicesServer> in
-            return DeviceInfo.query(on: req.db).filter(\.$deviceID == user.device.deviceID).first().flatMap { d -> EventLoopFuture<UserDevicesServer> in
-                
-                if d != nil {
-                    return Abort(.loopDetected) as! EventLoopFuture<UserDevicesServer>
-                }
-                
-                let device = DeviceInfo(type: user.device.type, deviceID:  user.device.deviceID, user: UserDevices(id: user.id))
-                
-                return device.create(on: req.db).flatMap { () -> EventLoopFuture<UserDevicesServer> in
+        return UserDevices.query(on: req.db).filter(\.$id == user.id).first().flatMap{ u -> EventLoopFuture<UserDevicesServer> in
+            if let uuid = u?.id {
+                return DeviceInfo.query(on: req.db).filter(\.$user.$id == uuid).all().flatMap { d -> EventLoopFuture<UserDevicesServer> in
                     
-                    return DeviceInfo.query(on: req.db).filter(\.$deviceID == user.device.deviceID).first().map
-                    { d -> UserDevicesServer in
+                    if d.isEmpty || !(d.contains(where: {$0.deviceID == user.device.deviceID})) {
+                        let device = DeviceInfo(type: user.device.type, deviceID: user.device.deviceID, user: u!)
                         
-                        return UserDevicesServer(id: user.id, devices: nil, device: DeviceServer(id: d!.id!, deviceID: d!.deviceID, type: d!.type))
+                        return device.save(on: req.db).map { () -> UserDevicesServer in
+                            if d.isEmpty {
+                                let deviceResult = DeviceServer(id: device.id!, deviceID: device.deviceID, type: device.type)
+                                
+                                return UserDevicesServer(id: device.$user.id, devices: nil, device: deviceResult)
+                                
+                            }
+                    
+                            var devicesResult: [DeviceServer] = []
+                            d.forEach { e in
+                                devicesResult.append(DeviceServer(id: e.id!, deviceID: e.deviceID, type: e.type))
+                            }
+                            
+                            devicesResult.append(DeviceServer(id: device.id!, deviceID: device.deviceID, type: device.type))
+                            return UserDevicesServer(id: device.$user.id, devices: devicesResult, device: nil)
+                            
+                        }
                     }
+            
+                    return req.eventLoop.makeSucceededVoidFuture().map { () -> UserDevicesServer in
+                        var devicesResult: [DeviceServer] = []
+                        
+                        for e in d {
+                            devicesResult.append(DeviceServer(id: e.id!, deviceID: e.deviceID, type: e.type))
+                        }
+                        
+                        return UserDevicesServer(id: uuid, devices: devicesResult, device: nil)
+                        
+                    }
+                }
+            }
+            
+            let userDB = UserDevices(id: user.id)
+            return userDB.create(on: req.db).flatMap { () -> EventLoopFuture<UserDevicesServer> in
+                
+                let device = DeviceInfo(type: user.device.type, deviceID: user.device.deviceID, user: userDB)
+                
+                return device.create(on: req.db).map { () -> UserDevicesServer in
+                    
+                    let deviceResult = DeviceServer(id: device.id!, deviceID: device.deviceID, type: device.type)
+                    
+                    let result = UserDevicesServer(id: device.$user.id, devices: nil, device: deviceResult)
+                    
+                    return result
                 }
             }
         }
@@ -68,7 +101,7 @@ final class DeviceController {
             
             for element in d {
                 
-                if let i = users.firstIndex(where: {$0.id == element.user.id}) {
+                if let i = users.firstIndex(where: {$0.id == element.$user.id}) {
                     users[i].devices!.append(DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type))
                 } else {
                     users.append(UserDevicesServer(id: element.$user.id, devices: [DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type)]))
