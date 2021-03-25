@@ -11,3 +11,8 @@ struct AddUserDevicesClient: Content {
     let id: UUID
     let device: DeviceClient
 }
+
+struct UserClient: Content {
+    let id: UUID
+}
+

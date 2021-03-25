@@ -18,6 +18,8 @@ final class DeviceController {
         
         app.get("users", use: getUsers)
         
+        app.post("user", use: getUser)
+        
         // TODO: test
         if app.environment == .development {
             app.delete("drop", use: dropDB)
@@ -44,7 +46,7 @@ final class DeviceController {
         
         return DeviceInfo.query(on: req.db).filter(\.$user.$id == push.userId).all().flatMap { (devices) -> EventLoopFuture<HTTPStatus> in
             if devices.isEmpty {
-                return req.eventLoop.makeFailedFuture(Abort(.custom(code: 404, reasonPhrase: "The user with the identifier \(push.userId) does not exist, or there are no devices attached to it")))
+                return req.eventLoop.makeFailedFuture(Abort(.notFound))
             }
             
             var task: [EventLoopFuture<Void>] = []
@@ -147,6 +149,22 @@ final class DeviceController {
             }
             
             return users
+        }
+    }
+    
+    func getUser(_ req: Request) throws -> EventLoopFuture<UserDevicesServer> {
+        let user = try req.content.decode(UserClient.self)
+        
+        return DeviceInfo.query(on: req.db).filter(\.$user.$id == user.id).all().map { d -> UserDevicesServer in
+            
+            var result = UserDevicesServer(id: user.id, devices: [], device: nil)
+            
+                d.forEach { (element) in
+                    result.devices?.append(DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type))
+                }
+            
+            
+            return result
         }
     }
 }
