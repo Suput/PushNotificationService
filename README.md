@@ -17,6 +17,8 @@ Action | [![Deploy](https://github.com/RTUITLab/ITLab-PushNotificationService/ac
         "topic": "<Build identifier of your project where notifications are sent to>"
     },
     
+    "jwkURL": "<Optional - Your JWK link if you want to work with 3rd party JWT>",
+
     "database": {
         "hostname": "localhost",
         "login": "postgres",
