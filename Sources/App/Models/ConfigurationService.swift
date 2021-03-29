@@ -13,6 +13,8 @@ struct ConfigurationService: Content {
     
     let testDevice: String?
     
+    let jwkURL: String?
+    
     let database: DatabasesSetting
    
     public static func loadSettings() -> ConfigurationService? {

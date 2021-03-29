@@ -7,6 +7,7 @@
 
 import Vapor
 import Fluent
+import JWT
 
 final class DeviceController {
     init(_ app: Application) {
@@ -42,6 +43,10 @@ final class DeviceController {
     }
     
     func push(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        
+///     TODO: remove comment before deployment
+//      let _ = try req.jwt.verify(as: ITLabPayload.self)
+        
         let push = try req.content.decode(PushClient.self)
         
         return DeviceInfo.query(on: req.db).filter(\.$user.$id == push.userId).all().flatMap { (devices) -> EventLoopFuture<HTTPStatus> in
