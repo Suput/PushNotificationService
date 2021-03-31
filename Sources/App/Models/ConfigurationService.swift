@@ -34,6 +34,21 @@ struct ConfigurationService: Content {
 
         return persone
     }
+    
+    public static func loadSettingsFCM() -> String? {        
+        let directory = DirectoryConfiguration.detect()
+                let fileURL = URL(fileURLWithPath: directory.workingDirectory)
+                    .appendingPathComponent("Private/json", isDirectory: true)
+                    .appendingPathComponent("FCM.json", isDirectory: false)
+        
+        guard
+            let data = try? Data(contentsOf: fileURL)
+        else {
+            return nil
+        }
+
+        return String(decoding: data, as: UTF8.self)
+    }
 }
 
 extension ConfigurationService {

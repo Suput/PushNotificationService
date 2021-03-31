@@ -7,6 +7,8 @@
 
 import Vapor
 import Fluent
+import FCM
+import APNS
 import JWT
 
 final class DeviceController {
@@ -44,8 +46,8 @@ final class DeviceController {
     
     func push(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
         
-///     TODO: remove comment before deployment
-//      let _ = try req.jwt.verify(as: ITLabPayload.self)
+        ///     TODO: remove comment before deployment
+        //      let _ = try req.jwt.verify(as: ITLabPayload.self)
         
         let push = try req.content.decode(PushClient.self)
         
@@ -57,16 +59,28 @@ final class DeviceController {
             var task: [EventLoopFuture<Void>] = []
             
             devices.forEach { device in
-                if device.type == .ios {
-                   task.append(
+                switch device.type {
+                case .ios:
+                    task.append(
                         req.apns.send(
                             .init(title: push.push.title, subtitle: nil, body: push.push.message),
                             to: device.deviceID
                         ))
+                    break
+                    
+                case .android:
+                    task.append(req.fcm.send(
+                                    .init(
+                                        topic: device.deviceID,
+                                        notification: .init(
+                                            title: push.push.title,
+                                            body: push.push.message
+                                    ))).map{ _ in})
+                    break
                 }
             }
             
-            return req.eventLoop.makeSucceededVoidFuture().fold(task) { (t, t1) -> EventLoopFuture<Void> in
+            return req.eventLoop.makeSucceededVoidFuture().fold(task) { (t, t1) in
                 return req.eventLoop.makeSucceededVoidFuture()
             }.transform(to: HTTPStatus.ok)
             
@@ -164,9 +178,9 @@ final class DeviceController {
             
             var result = UserDevicesServer(id: user.id, devices: [], device: nil)
             
-                d.forEach { (element) in
-                    result.devices?.append(DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type))
-                }
+            d.forEach { (element) in
+                result.devices?.append(DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type))
+            }
             
             
             return result

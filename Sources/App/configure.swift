@@ -1,6 +1,7 @@
 import Vapor
 import JWTKit
 import APNS
+import FCM
 import JWT
 
 import Fluent
@@ -20,6 +21,10 @@ public func configure(_ app: Application) throws {
             topic: config.apns.topic,
             environment: .sandbox
         )
+        
+        if let fcm = ConfigurationService.loadSettingsFCM() {
+            app.fcm.configuration = .init(fromJSON: fcm)
+        }
         
         app.databases.use(.postgres(hostname: config.database.hostname, username: config.database.login, password: config.database.password, database: config.database.databaseName), as: .psql)
         
