@@ -69,13 +69,10 @@ final class DeviceController {
                     break
                     
                 case .android:
-                    task.append(req.fcm.send(
-                                    .init(
-                                        topic: device.deviceID,
-                                        notification: .init(
-                                            title: push.push.title,
-                                            body: push.push.message
-                                    ))).map{ _ in})
+                    let notification = FCMNotification(title: push.push.title, body: push.push.message)
+                    let message = FCMMessage(token: device.deviceID, notification: notification)
+                    task.append(req.fcm.send(message).map { _ in
+                    })
                     break
                 }
             }
