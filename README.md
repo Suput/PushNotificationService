@@ -30,11 +30,13 @@ Action | [![Deploy](https://github.com/RTUITLab/ITLab-PushNotificationService/ac
 ```
 
 **FCM.json**:
-Данный файл нужно сгенерировать на сайте [Firebase](https://console.firebase.google.com/) приватный ключ
+
+Данный файл с приватным ключом нужно сгенерировать на сайте [Firebase](https://console.firebase.google.com/)
 
 Инструкция по генерации файла `FCM.json`: [тык.](https://firebase.google.com/docs/cloud-messaging/auth-server?authuser=0#provide-credentials-manually)
 
 **APNs.p8**:
+
 Данный файл нужно сгенерировать на сайте [Apple Developers](https://developer.apple.com/)
 
 Инструкция по генерации файла `APNs.p8`: [тык.](https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/establishing_a_certificate-based_connection_to_apns)
