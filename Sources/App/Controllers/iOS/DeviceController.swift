@@ -71,10 +71,24 @@ final class DeviceController {
                 case .android:
                     let notification = FCMNotification(title: push.push.title, body: push.push.message)
                     let message = FCMMessage(token: device.deviceID, notification: notification)
-                    task.append(req.fcm.send(message).map { _ in
+                    
+                    task.append(req.fcm.send(message).flatMapAlways{ (result) in
+                        switch result {
+                        case .failure(let e):
+                            if let error = e as? GoogleError,
+                               error.code == 404 || error.code == 410 {
+                                req.logger.info("Device \(device.id) of type Android has been removed from the database")
+                                return device.delete(on: req.db)
+                            }
+                            break
+                        case .success(_):
+                            break
+                        }
+                        return req.eventLoop.makeSucceededVoidFuture()
                     })
                     break
                 }
+                
             }
             
             return req.eventLoop.makeSucceededVoidFuture().fold(task) { (t, t1) in
