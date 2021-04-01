@@ -65,7 +65,19 @@ final class DeviceController {
                         req.apns.send(
                             .init(title: push.push.title, subtitle: nil, body: push.push.message),
                             to: device.deviceID
-                        ))
+                        ).flatMapError{ (e) -> EventLoopFuture<Void> in
+                            if let error = e as? APNSwiftError.ResponseError {
+                                switch error {
+                                case .badRequest(.badDeviceToken):
+                                    req.logger.info("Device \(String(describing: device.id!)) of type iOS has been removed from the database")
+                                    return device.delete(on: req.db)
+                                default:
+                                    break
+                                }
+                            }
+                            
+                            return req.eventLoop.makeSucceededVoidFuture()
+                        })
                     break
                     
                 case .android:
@@ -77,7 +89,7 @@ final class DeviceController {
                         case .failure(let e):
                             if let error = e as? GoogleError,
                                error.code == 404 || error.code == 410 {
-                                req.logger.info("Device \(device.id) of type Android has been removed from the database")
+                                req.logger.info("Device \(String(describing: device.id!)) of type Android has been removed from the database")
                                 return device.delete(on: req.db)
                             }
                             break
