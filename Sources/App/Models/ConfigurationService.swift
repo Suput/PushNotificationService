@@ -16,14 +16,18 @@ struct ConfigurationService: Content {
     let jwkURL: String?
     
     let database: DatabasesSetting
-   
-    public static func loadSettings() -> ConfigurationService? {
+    
+    public static func loadSettings(_ app: Application) -> ConfigurationService? {
         let decoder = JSONDecoder()
         
         let directory = DirectoryConfiguration.detect()
-                let fileURL = URL(fileURLWithPath: directory.workingDirectory)
-                    .appendingPathComponent("Private/json", isDirectory: true)
-                    .appendingPathComponent("settings.json", isDirectory: false)
+        let path: String = app.environment.isRelease ? "run/secrets/" : "Private/json"
+        let file = app.environment.isRelease ? "setting" : "settings.json"
+        let fileURL = URL(fileURLWithPath: directory.viewsDirectory)
+            .appendingPathComponent(path, isDirectory: true)
+            .appendingPathComponent(file, isDirectory: false)
+        
+        print(fileURL)
         
         guard
             let data = try? Data(contentsOf: fileURL),
@@ -31,22 +35,22 @@ struct ConfigurationService: Content {
         else {
             return nil
         }
-
+        
         return persone
     }
     
     public static func loadSettingsFCM() -> String? {        
         let directory = DirectoryConfiguration.detect()
-                let fileURL = URL(fileURLWithPath: directory.workingDirectory)
-                    .appendingPathComponent("Private/json", isDirectory: true)
-                    .appendingPathComponent("FCM.json", isDirectory: false)
+        let fileURL = URL(fileURLWithPath: directory.workingDirectory)
+            .appendingPathComponent("Private/json", isDirectory: true)
+            .appendingPathComponent("FCM.json", isDirectory: false)
         
         guard
             let data = try? Data(contentsOf: fileURL)
         else {
             return nil
         }
-
+        
         return String(decoding: data, as: UTF8.self)
     }
 }

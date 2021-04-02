@@ -10,7 +10,7 @@ import FluentPostgresDriver
 // configures your application
 public func configure(_ app: Application) throws {
     
-    if let config = ConfigurationService.loadSettings() {
+    if let config = ConfigurationService.loadSettings(app) {
         app.logger.info("Configuration APNs and Database")
         app.apns.configuration = try .init(
             authenticationMethod: .jwt(
