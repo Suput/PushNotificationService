@@ -10,3 +10,8 @@ import Vapor
 struct TopicClient: Content {
     var name: String
 }
+
+struct SubTopic: Content {
+    var name: String
+    var userID: UUID
+}

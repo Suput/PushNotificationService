@@ -103,7 +103,7 @@ final class DeviceController {
                 
             }
             
-            return task.flatten(on: req.eventLoop).transform(to: HTTPStatus.ok)
+            return task.flatten(on: req.eventLoop).transform(to: HTTPStatus.created)
             
         }
     }
@@ -182,11 +182,21 @@ final class DeviceController {
             var deviceQuery: [EventLoopFuture<Void>] = []
             
             usersDB.forEach { (userDB) in
-                deviceQuery.append(userDB.$devices.get(on: req.db).map { d in
-                    var result = UserDevicesServer(id: userDB.id!, devices: [])
+                deviceQuery.append(userDB.$devices.get(reload: true, on: req.db).and(userDB.$topics.get(reload: true, on: req.db)).map { resultDB in
+                    var result = UserDevicesServer(id: userDB.id!)
                     
-                    d.forEach { (element) in
-                        result.devices?.append(DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type))
+                    resultDB.0.forEach { (element) in
+                        if result.devices == nil {
+                            result.devices = []
+                        }
+                        result.devices?.append(.init(id: element.id!, deviceID: element.deviceID, type: element.type))
+                    }
+                    
+                    resultDB.1.forEach { (element) in
+                        if result.topics == nil {
+                            result.topics = []
+                        }
+                        result.topics?.append(.init(id: element.id!, topicName: element.nameTopic))
                     }
                     
                     users.append(result)
@@ -202,13 +212,22 @@ final class DeviceController {
         
         return UserDevices.query(on: req.db).filter(\.$id == user.id).first().unwrap(or: Abort(.notFound)).flatMap { (u) -> EventLoopFuture<UserDevicesServer> in
             
-            return u.$devices.get(on: req.db).map { (d) -> (UserDevicesServer) in
-                var result = UserDevicesServer(id: u.id!, devices: [])
+            return u.$devices.get(reload: true, on: req.db).and(u.$topics.get(reload: true, on: req.db)).map { resultDB -> (UserDevicesServer) in
+                var result = UserDevicesServer(id: u.id!)
                 
-                d.forEach { (element) in
-                    result.devices?.append(DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type))
+                resultDB.0.forEach { (element) in
+                    if result.devices == nil {
+                        result.devices = []
+                    }
+                    result.devices?.append(.init(id: element.id!, deviceID: element.deviceID, type: element.type))
                 }
                 
+                resultDB.1.forEach { (element) in
+                    if result.topics == nil {
+                        result.topics = []
+                    }
+                    result.topics?.append(.init(id: element.id!, topicName: element.nameTopic))
+                }
                 
                 return result
             }
