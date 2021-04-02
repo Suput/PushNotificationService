@@ -12,6 +12,6 @@ struct TopicClient: Content {
 }
 
 struct SubTopic: Content {
-    var name: String
+    var topicID: UUID
     var userID: UUID
 }

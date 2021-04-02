@@ -67,7 +67,7 @@ final class TopicController {
     func subscribeTopic(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
         let topic = try req.content.decode(SubTopic.self)
         
-        let getTopicDB = TopicNotification.query(on: req.db).filter(\.$nameTopic == topic.name).first().unwrap(or: Abort(.notFound))
+        let getTopicDB = TopicNotification.query(on: req.db).filter(\.$id == topic.topicID).first().unwrap(or: Abort(.notFound))
         
         return UserDevices.query(on: req.db).filter(\.$id == topic.userID).first().unwrap(or: Abort(.notFound)).and(getTopicDB).flatMap { (data) -> EventLoopFuture<HTTPStatus> in
             
@@ -84,7 +84,7 @@ final class TopicController {
     func unsubscribeTopic(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
         let topic = try req.content.decode(SubTopic.self)
         
-        let getTopicDB = TopicNotification.query(on: req.db).filter(\.$nameTopic == topic.name).first().unwrap(or: Abort(.notFound))
+        let getTopicDB = TopicNotification.query(on: req.db).filter(\.$id == topic.topicID).first().unwrap(or: Abort(.notFound))
         
         return UserDevices.query(on: req.db).filter(\.$id == topic.userID).first().unwrap(or: Abort(.notFound)).and(getTopicDB).flatMap { (data) -> EventLoopFuture<HTTPStatus> in
             
