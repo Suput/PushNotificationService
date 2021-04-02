@@ -122,7 +122,7 @@ final class DeviceController {
                             if d.isEmpty {
                                 let deviceResult = DeviceServer(id: device.id!, deviceID: device.deviceID, type: device.type)
                                 
-                                return UserDevicesServer(id: device.$user.id, devices: nil, device: deviceResult)
+                                return UserDevicesServer(id: device.$user.id, device: deviceResult)
                                 
                             }
                             
@@ -132,7 +132,7 @@ final class DeviceController {
                             }
                             
                             devicesResult.append(DeviceServer(id: device.id!, deviceID: device.deviceID, type: device.type))
-                            return UserDevicesServer(id: device.$user.id, devices: devicesResult, device: nil)
+                            return UserDevicesServer(id: device.$user.id, devices: devicesResult)
                             
                         }
                     }
@@ -144,7 +144,7 @@ final class DeviceController {
                             devicesResult.append(DeviceServer(id: e.id!, deviceID: e.deviceID, type: e.type))
                         }
                         
-                        return UserDevicesServer(id: userDB.id!, devices: devicesResult, device: nil)
+                        return UserDevicesServer(id: userDB.id!, devices: devicesResult)
                         
                     }
                 }
@@ -159,7 +159,7 @@ final class DeviceController {
                     
                     let deviceResult = DeviceServer(id: device.id!, deviceID: device.deviceID, type: device.type)
                     
-                    let result = UserDevicesServer(id: device.$user.id, devices: nil, device: deviceResult)
+                    let result = UserDevicesServer(id: device.$user.id, device: deviceResult)
                     
                     return result
                 }
@@ -183,7 +183,7 @@ final class DeviceController {
             
             usersDB.forEach { (userDB) in
                 deviceQuery.append(userDB.$devices.get(on: req.db).map { d in
-                    var result = UserDevicesServer(id: userDB.id!, devices: [], device: nil)
+                    var result = UserDevicesServer(id: userDB.id!, devices: [])
                     
                     d.forEach { (element) in
                         result.devices?.append(DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type))
@@ -203,7 +203,7 @@ final class DeviceController {
         return UserDevices.query(on: req.db).filter(\.$id == user.id).first().unwrap(or: Abort(.notFound)).flatMap { (u) -> EventLoopFuture<UserDevicesServer> in
             
             return u.$devices.get(on: req.db).map { (d) -> (UserDevicesServer) in
-                var result = UserDevicesServer(id: u.id!, devices: [], device: nil)
+                var result = UserDevicesServer(id: u.id!, devices: [])
                 
                 d.forEach { (element) in
                     result.devices?.append(DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type))

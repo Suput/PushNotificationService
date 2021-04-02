@@ -23,4 +23,7 @@ final class TopicNotification: Model {
     
     init() {}
     
+    init(topic name: String) {
+        self.nameTopic = name
+    }
 }
