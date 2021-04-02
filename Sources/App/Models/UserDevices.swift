@@ -15,6 +15,9 @@ final class UserDevices: Model {
     @ID(key: .id)
     var id: UUID?
     
+    @Children(for: \.$user)
+    var devices: [DeviceInfo]
+    
     init() {}
     
     init(id: UUID?)
