@@ -55,4 +55,6 @@ fileprivate func migration(_ app: Application) {
     app.migrations.add(CreateDevice())
     app.migrations.add(CreateUser())
     app.migrations.add(Device_AddParentUser())
+    app.migrations.add(CreateTopicNotification())
+    app.migrations.add(CreateUserTopic())
 }
