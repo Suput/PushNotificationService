@@ -36,6 +36,11 @@ final class DeviceInfo: Model {
         self.$user.id = user.id!
     }
     
+    init(type: DeviceType, deviceID: String) {
+        self.type = type
+        self.deviceID = deviceID
+    }
+    
     init(device client: DeviceClient) {
         self.type = client.type
         self.deviceID = client.deviceID

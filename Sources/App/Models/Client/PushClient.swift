@@ -8,8 +8,13 @@
 import Vapor
 
 
-struct PushClient: Content {
-    let userId: UUID
+struct PushToUserClient: Content {
+    let userID: UUID
+    let push: PushMessage
+}
+
+struct PushToTopicClient: Content {
+    let topicID: UUID
     let push: PushMessage
 }
 
