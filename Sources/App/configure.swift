@@ -4,6 +4,10 @@ import APNS
 import FCM
 import JWT
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 import Fluent
 import FluentPostgresDriver
 
