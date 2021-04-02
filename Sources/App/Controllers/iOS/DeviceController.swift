@@ -103,9 +103,7 @@ final class DeviceController {
                 
             }
             
-            return req.eventLoop.makeSucceededVoidFuture().fold(task) { (t, t1) in
-                return req.eventLoop.makeSucceededVoidFuture()
-            }.transform(to: HTTPStatus.ok)
+            return task.flatten(on: req.eventLoop).transform(to: HTTPStatus.ok)
             
         }
     }
@@ -179,34 +177,41 @@ final class DeviceController {
         
         var users: [UserDevicesServer] = []
         
-        return DeviceInfo.query(on: req.db).all().map { d -> [UserDevicesServer] in
+        return UserDevices.query(on: req.db).all().flatMap { (usersDB) -> EventLoopFuture<[UserDevicesServer]> in
             
-            for element in d {
-                
-                if let i = users.firstIndex(where: {$0.id == element.$user.id}) {
-                    users[i].devices!.append(DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type))
-                } else {
-                    users.append(UserDevicesServer(id: element.$user.id, devices: [DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type)]))
-                }
+            var deviceQuery: [EventLoopFuture<Void>] = []
+            
+            usersDB.forEach { (userDB) in
+                deviceQuery.append(userDB.$devices.get(on: req.db).map { d in
+                    var result = UserDevicesServer(id: userDB.id!, devices: [], device: nil)
+                    
+                    d.forEach { (element) in
+                        result.devices?.append(DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type))
+                    }
+                    
+                    users.append(result)
+                })
             }
             
-            return users
+            return deviceQuery.flatten(on: req.eventLoop).transform(to: users)
         }
     }
     
     func getUser(_ req: Request) throws -> EventLoopFuture<UserDevicesServer> {
         let user = try req.content.decode(UserClient.self)
         
-        return DeviceInfo.query(on: req.db).filter(\.$user.$id == user.id).all().map { d -> UserDevicesServer in
+        return UserDevices.query(on: req.db).filter(\.$id == user.id).first().unwrap(or: Abort(.notFound)).flatMap { (u) -> EventLoopFuture<UserDevicesServer> in
             
-            var result = UserDevicesServer(id: user.id, devices: [], device: nil)
-            
-            d.forEach { (element) in
-                result.devices?.append(DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type))
+            return u.$devices.get(on: req.db).map { (d) -> (UserDevicesServer) in
+                var result = UserDevicesServer(id: u.id!, devices: [], device: nil)
+                
+                d.forEach { (element) in
+                    result.devices?.append(DeviceServer(id: element.id!, deviceID: element.deviceID, type: element.type))
+                }
+                
+                
+                return result
             }
-            
-            
-            return result
         }
     }
 }

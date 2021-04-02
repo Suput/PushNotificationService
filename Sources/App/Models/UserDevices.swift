@@ -15,6 +15,9 @@ final class UserDevices: Model {
     @ID(key: .id)
     var id: UUID?
     
+    @Children(for: \.$user)
+    var devices: [DeviceInfo]
+    
     @Siblings(through: UserTopic.self, from: \.$user, to: \.$topic)
     public var topics: [TopicNotification]
     
