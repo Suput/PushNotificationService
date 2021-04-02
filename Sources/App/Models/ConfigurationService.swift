@@ -6,6 +6,7 @@
 //
 
 import Vapor
+import APNS
 
 struct ConfigurationService: Content {
     
@@ -21,13 +22,17 @@ struct ConfigurationService: Content {
         let decoder = JSONDecoder()
         
         let directory = DirectoryConfiguration.detect()
-        let path: String = app.environment.isRelease ? "run/secrets/" : "Private/json"
-        let file = app.environment.isRelease ? "setting" : "settings.json"
-        let fileURL = URL(fileURLWithPath: directory.viewsDirectory)
-            .appendingPathComponent(path, isDirectory: true)
-            .appendingPathComponent(file, isDirectory: false)
         
-        print(fileURL)
+        let path: String = app.environment.isRelease ? "run/secrets/" : "Private/json"
+        let file = "settings.json"
+        var fileURL = URL(fileURLWithPath: directory.workingDirectory)
+        
+        if app.environment.isRelease {
+            fileURL = fileURL.deletingLastPathComponent()
+        }
+        
+        fileURL = fileURL.appendingPathComponent(path, isDirectory: true)
+            .appendingPathComponent(file, isDirectory: false)
         
         guard
             let data = try? Data(contentsOf: fileURL),
@@ -39,11 +44,19 @@ struct ConfigurationService: Content {
         return persone
     }
     
-    public static func loadSettingsFCM() -> String? {        
+    public static func loadSettingsFCM(_ app: Application) -> String? {        
         let directory = DirectoryConfiguration.detect()
-        let fileURL = URL(fileURLWithPath: directory.workingDirectory)
-            .appendingPathComponent("Private/json", isDirectory: true)
-            .appendingPathComponent("FCM.json", isDirectory: false)
+        
+        let path: String = app.environment.isRelease ? "run/secrets/" : "Private/json"
+        let file = "FCM.json"
+        var fileURL = URL(fileURLWithPath: directory.workingDirectory)
+        
+        if app.environment.isRelease {
+            fileURL = fileURL.deletingLastPathComponent()
+        }
+        
+        fileURL = fileURL.appendingPathComponent(path, isDirectory: true)
+            .appendingPathComponent(file, isDirectory: false)
         
         guard
             let data = try? Data(contentsOf: fileURL)
@@ -52,6 +65,27 @@ struct ConfigurationService: Content {
         }
         
         return String(decoding: data, as: UTF8.self)
+    }
+    
+    public static func loadSettingsAPNs(_ app: Application) throws -> Data {
+        let directory = DirectoryConfiguration.detect()
+        
+        let path: String = app.environment.isRelease ? "run/secrets/" : "Private/"
+        let file = "APNs.p8"
+        var fileURL = URL(fileURLWithPath: directory.workingDirectory)
+        
+        if app.environment.isRelease {
+            fileURL = fileURL.deletingLastPathComponent()
+        }
+        
+        fileURL = fileURL.appendingPathComponent(path, isDirectory: true)
+            .appendingPathComponent(file, isDirectory: false)
+        
+        guard let data = try? Data(contentsOf: fileURL) else {
+            throw APNSwiftError.SigningError.certificateFileDoesNotExist
+        }
+        
+        return data
     }
 }
 

@@ -12,9 +12,10 @@ public func configure(_ app: Application) throws {
     
     if let config = ConfigurationService.loadSettings(app) {
         app.logger.info("Configuration APNs and Database")
+        let apnsData = try ConfigurationService.loadSettingsAPNs(app)
         app.apns.configuration = try .init(
             authenticationMethod: .jwt(
-                key: .private(filePath: "Private/APNs.p8"),
+                key: .private(pem: apnsData),
                 keyIdentifier: JWKIdentifier(string: config.apns.keyIdentifier),
                 teamIdentifier: config.apns.teamIdentifier
             ),
@@ -22,7 +23,7 @@ public func configure(_ app: Application) throws {
             environment: .sandbox
         )
         
-        if let fcm = ConfigurationService.loadSettingsFCM() {
+        if let fcm = ConfigurationService.loadSettingsFCM(app) {
             app.fcm.configuration = .init(fromJSON: fcm)
         }
         
