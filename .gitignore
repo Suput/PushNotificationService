@@ -8,5 +8,6 @@ db.sqlite
 .swiftpm
 
 
-# APNs
+# Secrets
 Private/
+*.env
