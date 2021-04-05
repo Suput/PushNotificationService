@@ -6,6 +6,7 @@
 //
 
 import Vapor
+import APNS
 
 struct ConfigurationService: Content {
     
@@ -13,15 +14,30 @@ struct ConfigurationService: Content {
     
     let testDevice: String?
     
+    let jwkURL: String?
+    
     let database: DatabasesSetting
-   
+    
     public static func loadSettings() -> ConfigurationService? {
         let decoder = JSONDecoder()
         
         let directory = DirectoryConfiguration.detect()
-                let fileURL = URL(fileURLWithPath: directory.workingDirectory)
-                    .appendingPathComponent("Private/json", isDirectory: true)
-                    .appendingPathComponent("settings.json", isDirectory: false)
+        
+        var path: String = "Private/json/"
+        
+        if let p = Environment.get("PATH_SECRETS") {
+            path = p
+        }
+        
+        let file = "settings.json"
+        var fileURL = URL(fileURLWithPath: directory.workingDirectory)
+        
+        if Environment.get("PATH_SECRETS") != nil {
+            fileURL = fileURL.deletingLastPathComponent()
+        }
+        
+        fileURL = fileURL.appendingPathComponent(path, isDirectory: true)
+            .appendingPathComponent(file, isDirectory: false)
         
         guard
             let data = try? Data(contentsOf: fileURL),
@@ -29,8 +45,36 @@ struct ConfigurationService: Content {
         else {
             return nil
         }
-
+        
         return persone
+    }
+    
+    public static func loadSettingsFCM() -> String? {
+        let directory = DirectoryConfiguration.detect()
+        
+        var path: String = "Private/json/"
+        
+        if let p = Environment.get("PATH_SECRETS") {
+            path = p
+        }
+        
+        let file = "FCM.json"
+        var fileURL = URL(fileURLWithPath: directory.workingDirectory)
+        
+        if Environment.get("PATH_SECRETS") != nil {
+            fileURL = fileURL.deletingLastPathComponent()
+        }
+        
+        fileURL = fileURL.appendingPathComponent(path, isDirectory: true)
+            .appendingPathComponent(file, isDirectory: false)
+        
+        guard
+            let data = try? Data(contentsOf: fileURL)
+        else {
+            return nil
+        }
+        
+        return String(decoding: data, as: UTF8.self)
     }
 }
 
