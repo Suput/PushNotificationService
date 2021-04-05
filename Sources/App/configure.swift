@@ -26,6 +26,7 @@ public func configure(_ app: Application) throws {
             topic: config.apns.topic,
             environment: .sandbox
         )
+        app.apns.configuration?.timeout = .minutes(1)
         
         if let fcm = ConfigurationService.loadSettingsFCM(app) {
             app.fcm.configuration = .init(fromJSON: fcm)
