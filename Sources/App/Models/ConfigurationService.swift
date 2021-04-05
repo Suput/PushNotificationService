@@ -18,16 +18,21 @@ struct ConfigurationService: Content {
     
     let database: DatabasesSetting
     
-    public static func loadSettings(_ app: Application) -> ConfigurationService? {
+    public static func loadSettings() -> ConfigurationService? {
         let decoder = JSONDecoder()
         
         let directory = DirectoryConfiguration.detect()
         
-        let path: String = app.environment.isRelease ? "run/secrets/" : "Private/json"
+        var path: String = "Private/json/"
+        
+        if let p = Environment.get("PATH_SECRETS") {
+            path = p
+        }
+        
         let file = "settings.json"
         var fileURL = URL(fileURLWithPath: directory.workingDirectory)
         
-        if app.environment.isRelease {
+        if Environment.get("PATH_SECRETS") != nil {
             fileURL = fileURL.deletingLastPathComponent()
         }
         
@@ -44,14 +49,19 @@ struct ConfigurationService: Content {
         return persone
     }
     
-    public static func loadSettingsFCM(_ app: Application) -> String? {        
+    public static func loadSettingsFCM() -> String? {
         let directory = DirectoryConfiguration.detect()
         
-        let path: String = app.environment.isRelease ? "run/secrets/" : "Private/json"
+        var path: String = "Private/json/"
+        
+        if let p = Environment.get("PATH_SECRETS") {
+            path = p
+        }
+        
         let file = "FCM.json"
         var fileURL = URL(fileURLWithPath: directory.workingDirectory)
         
-        if app.environment.isRelease {
+        if Environment.get("PATH_SECRETS") != nil {
             fileURL = fileURL.deletingLastPathComponent()
         }
         
@@ -65,27 +75,6 @@ struct ConfigurationService: Content {
         }
         
         return String(decoding: data, as: UTF8.self)
-    }
-    
-    public static func loadSettingsAPNs(_ app: Application) throws -> Data {
-        let directory = DirectoryConfiguration.detect()
-        
-        let path: String = app.environment.isRelease ? "run/secrets/" : "Private/"
-        let file = "APNs.p8"
-        var fileURL = URL(fileURLWithPath: directory.workingDirectory)
-        
-        if app.environment.isRelease {
-            fileURL = fileURL.deletingLastPathComponent()
-        }
-        
-        fileURL = fileURL.appendingPathComponent(path, isDirectory: true)
-            .appendingPathComponent(file, isDirectory: false)
-        
-        guard let data = try? Data(contentsOf: fileURL) else {
-            throw APNSwiftError.SigningError.certificateFileDoesNotExist
-        }
-        
-        return data
     }
 }
 
