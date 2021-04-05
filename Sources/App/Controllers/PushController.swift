@@ -19,21 +19,28 @@ final class PushController {
         app.post(["push", "topic"], use: pushToTopic)
     }
     
-    func pushToUser(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
+    func pushToUser(_ req: Request) throws -> HTTPStatus {
         let push = try req.content.decode(PushToUserClient.self)
-        return DeviceInfo.query(on: req.db).filter(\.$user.$id == push.userID).all().flatMap { (devices) -> EventLoopFuture<HTTPStatus> in
+        
+        let task: EventLoopFuture<Void> = DeviceInfo.query(on: req.db).filter(\.$user.$id == push.userID).all().flatMap { (devices) -> EventLoopFuture<Void> in
             
-            return self.assemblyDevice(req, devices: devices, message: push.push).flatten(on: req.eventLoop).transform(to: HTTPStatus.created)
+            return self.assemblyDevice(req, devices: devices, message: push.push).flatten(on: req.eventLoop)
             
         }
+        
+        task.whenComplete { (result) in
+            req.logger.info("Notification requests completed")
+        }
+        
+        return .ok
     }
     
-    func pushToTopic(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
+    func pushToTopic(_ req: Request) throws -> HTTPStatus {
         let push = try req.content.decode(PushToTopicClient.self)
         
-        return TopicNotification.query(on: req.db).filter(\.$id == push.topicID).first().unwrap(or: Abort(.notFound)).flatMap { (topic) -> EventLoopFuture<HTTPStatus> in
+        let task: EventLoopFuture<Void> = TopicNotification.query(on: req.db).filter(\.$id == push.topicID).first().unwrap(or: Abort(.notFound)).flatMap { (topic) -> EventLoopFuture<Void> in
             
-            return topic.$users.get(reload: true, on: req.db).flatMap { (users) -> EventLoopFuture<HTTPStatus> in
+            return topic.$users.get(reload: true, on: req.db).flatMap { (users) -> EventLoopFuture<Void> in
                 
                 var topicTask: [EventLoopFuture<Void>] = []
                 
@@ -44,9 +51,15 @@ final class PushController {
                     })
                 }
                 
-                return topicTask.flatten(on: req.eventLoop).transform(to: HTTPStatus.created)
+                return topicTask.flatten(on: req.eventLoop)
             }
         }
+        
+        task.whenComplete { (result) in
+            req.logger.info("Notification requests completed")
+        }
+        
+        return .ok
     }
     
     func assemblyDevice(_ req: Request, devices: [DeviceInfo], message: PushMessage) -> [EventLoopFuture<Void>] {
