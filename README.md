@@ -1,4 +1,4 @@
-# ITLab - Push-Notification Service
+# Push-Notification Service
 Сервис по отправке Push-уведомлений на мобильное устройство
 
 Status | main | develop 
@@ -86,10 +86,20 @@ docker-compose up
 ```
 Сервер будет доступен по `0.0.0.0:8080`
 
+## Плагины для устройств
+
+Устройство | Ссылка
+--- | ---
+ iOS| https://github.com/RTUITLab/PushNotification-iOS
+ Android | Coming soon
+ Flutter | Coming soon
+
 ## Framework
 Название | Ссылка
 --- | ---
 Vapor | https://github.com/vapor/vapor/
-Vapor APNs | https://github.com/vapor/apns.git
+APNs | https://github.com/vapor/apns
+FCM (Firebase) | https://github.com/MihaelIsaev/FCM
 Fluent | https://github.com/vapor/fluent
 Fluent PostgreSQL | https://github.com/vapor/fluent-postgres-driver
+JWT | https://github.com/vapor/jwt
