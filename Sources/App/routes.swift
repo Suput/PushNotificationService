@@ -6,6 +6,7 @@ func routes(_ app: Application) throws {
     
     let _ = TopicController(app)
     
-    let _ = try PushController(app)
-
+    let _ = PushController(app)
+    
+    let _ = try RedisController(app)
 }
