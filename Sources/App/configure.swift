@@ -3,6 +3,7 @@ import JWTKit
 import APNS
 import FCM
 import JWT
+import Redis
 
 #if canImport(FoundationNetworking)
 import FoundationNetworking
@@ -35,6 +36,8 @@ public func configure(_ app: Application) throws {
         app.databases.use(.postgres(hostname: config.database.hostname, username: config.database.login, password: config.database.password, database: config.database.databaseName), as: .psql)
         
         migration(app)
+        
+        app.redis.configuration = try RedisConfiguration(hostname: "localhost")
         
         if let jwkURL = config.jwkURL {
             let jwksData = try Data(

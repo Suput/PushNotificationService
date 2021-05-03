@@ -10,6 +10,7 @@ import Fluent
 import FCM
 import APNS
 import JWT
+import Redis
 
 final class PushController {
     
@@ -68,48 +69,55 @@ final class PushController {
         devices.forEach { device in
             switch device.type {
             case .ios:
-                task.append(
-                    req.apns.send(
-                        .init(title: message.title, subtitle: nil, body: message.message),
-                        to: device.deviceID
-                    ).flatMapError{ (e) -> EventLoopFuture<Void> in
-                        if let error = e as? APNSwiftError.ResponseError {
-                            switch error {
-                            case .badRequest(.badDeviceToken):
-                                req.logger.info("Device \(String(describing: device.id!)) of type iOS has been removed from the database")
-                                return device.delete(on: req.db)
-                            default:
-                                break
-                            }
-                        }
-                        
-                        return req.eventLoop.makeSucceededVoidFuture()
-                    })
+                task.append(assemblyIOSDevice(req, device: device, message: message))
                 break
                 
             case .android:
-                let notification = FCMNotification(title: message.title, body: message.message)
-                let message = FCMMessage(token: device.deviceID, notification: notification)
-                
-                task.append(req.fcm.send(message).flatMapAlways{ (result) in
-                    switch result {
-                    case .failure(let e):
-                        if let error = e as? GoogleError,
-                           error.code == 404 || error.code == 410 {
-                            req.logger.info("Device \(String(describing: device.id!)) of type Android has been removed from the database")
-                            return device.delete(on: req.db)
-                        }
-                        break
-                    case .success(_):
-                        break
-                    }
-                    return req.eventLoop.makeSucceededVoidFuture()
-                })
+                task.append(assemblyAndroidDevice(req, device: device, message: message))
                 break
             }
-            
         }
         
         return task
+    }
+    
+    func assemblyIOSDevice(_ req: Request, device: DeviceInfo, message: PushMessage) -> EventLoopFuture<Void> {
+        req.apns.send(
+            .init(title: message.title, subtitle: nil, body: message.message),
+            to: device.deviceID
+        ).flatMapError{ (e) -> EventLoopFuture<Void> in
+            if let error = e as? APNSwiftError.ResponseError {
+                switch error {
+                case .badRequest(.badDeviceToken):
+                    req.logger.info("Device \(String(describing: device.id!)) of type iOS has been removed from the database")
+                    return device.delete(on: req.db)
+                default:
+                    break
+                }
+            }
+            
+            return req.eventLoop.makeSucceededVoidFuture()
+        }
+    }
+    
+    func assemblyAndroidDevice(_ req: Request, device: DeviceInfo, message: PushMessage) -> EventLoopFuture<Void> {
+        let notification = FCMNotification(title: message.title, body: message.message)
+        let message = FCMMessage(token: device.deviceID, notification: notification)
+        
+        return req.fcm.send(message).flatMapAlways{ (result) in
+            switch result {
+            case .failure(let e):
+                if let error = e as? GoogleError,
+                   error.code == 404 || error.code == 410 {
+                    req.logger.info("Device \(String(describing: device.id!)) of type Android has been removed from the database")
+                    return device.delete(on: req.db)
+                }
+                break
+            case .success(_):
+                break
+            }
+            
+            return req.eventLoop.makeSucceededVoidFuture()
+        }
     }
 }
