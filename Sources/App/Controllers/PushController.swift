@@ -24,7 +24,16 @@ final class PushController {
         app.redis.subscribe(to: "chanal1") { channel, message in
             switch channel {
             case "chanal1" :
-                print(message)
+                if let m = message.string?.data(using: .utf8) {
+                    do {
+                    let result = try JSONDecoder().decode(RedisPushModel.self, from: m)
+                        
+                    print(result)
+                        
+                    } catch {
+                        print("FAIL")
+                    }
+                }
                 break
             default: break
             }
