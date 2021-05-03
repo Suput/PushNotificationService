@@ -24,6 +24,10 @@ Action | [![Deploy](https://github.com/RTUITLab/ITLab-PushNotificationService/ac
         "login": "postgres",
         "password": "postgres",
         "databaseName": "notify"
+    },
+
+    "redis": {
+        "hostname": "localhost"
     }
 }
 

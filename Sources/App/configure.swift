@@ -37,7 +37,7 @@ public func configure(_ app: Application) throws {
         
         migration(app)
         
-        app.redis.configuration = try RedisConfiguration(hostname: "localhost")
+        app.redis.configuration = try RedisConfiguration(hostname: config.redis.hostname)
         
         if let jwkURL = config.jwkURL {
             let jwksData = try Data(

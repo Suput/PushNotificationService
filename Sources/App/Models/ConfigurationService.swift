@@ -18,6 +18,8 @@ struct ConfigurationService: Content {
     
     let database: DatabasesSetting
     
+    let redis: RedisSetting
+    
     public static func loadSettings() -> ConfigurationService? {
         let decoder = JSONDecoder()
         
@@ -90,5 +92,8 @@ extension ConfigurationService {
         let login: String
         let password: String
         let databaseName: String
+    }
+    struct RedisSetting: Content {
+        let hostname: String
     }
 }
