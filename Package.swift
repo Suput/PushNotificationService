@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "itlab-mob-notification",
+    name: "PushNotificationService",
     platforms: [
        .macOS(.v10_15)
     ],
