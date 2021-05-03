@@ -10,13 +10,28 @@ import Fluent
 import FCM
 import APNS
 import JWT
+import Redis
 
 final class PushController {
     
-    init(_ app: Application) {
+    init(_ app: Application) throws {
         app.post(["push", "user"], use: pushToUser)
         
         app.post(["push", "topic"], use: pushToTopic)
+        
+        try app.boot() // TODO: We have to wait for the Redis package update
+        
+        app.redis.subscribe(to: "chanal1") { channel, message in
+            switch channel {
+            case "chanal1" :
+                print(message)
+                break
+            default: break
+            }
+        }.whenComplete { result in
+            print("redis")
+        }
+        
     }
     
     func pushToUser(_ req: Request) throws -> HTTPStatus {
