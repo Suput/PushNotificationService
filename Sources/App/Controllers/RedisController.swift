@@ -21,9 +21,9 @@ class RedisController {
         
         try app.boot() // TODO: We have to wait for the Redis package update
         
-        app.redis.subscribe(to: "chanal1") { channel, message in
+        app.redis.subscribe(to: "pushInfo") { channel, message in
             switch channel {
-            case "chanal1" :
+            case "pushInfo" :
                 if let m = message.string?.data(using: .utf8) {
                     do {
                         let result = try JSONDecoder().decode(RedisPushModel.self, from: m)

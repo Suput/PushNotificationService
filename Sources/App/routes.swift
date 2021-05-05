@@ -8,7 +8,7 @@ func routes(_ app: Application) throws {
     
     let _ = TopicController(app)
     
-    let _ = PushController(app)
+    let _ = PushController(app, websocket: socket)
     
     let _ = try RedisController(app, websocket: socket)
 }
