@@ -14,7 +14,12 @@ import Redis
 
 final class PushController {
     
-    init(_ app: Application) {
+    let websocket: WebSocketController
+    
+    init(_ app: Application, websocket: WebSocketController) {
+        
+        self.websocket = websocket
+        
         app.post(["push", "user"], use: pushToUser)
         
         app.post(["push", "topic"], use: pushToTopic)
@@ -26,6 +31,9 @@ final class PushController {
         let task: EventLoopFuture<Void> = DeviceInfo.query(on: req.db).filter(\.$user.$id == push.userID).all().flatMap { (devices) -> EventLoopFuture<Void> in
             
             return self.assemblyDevice(req, devices: devices, message: push.push).flatten(on: req.eventLoop)
+                .map {
+                    self.assemblyWebSocket(usersId: push.userID, message: push.push)
+                }
             
         }
         
@@ -53,6 +61,10 @@ final class PushController {
                 }
                 
                 return topicTask.flatten(on: req.eventLoop)
+                    .map {
+                        let usersId = users.map { $0.id! }
+                        self.assemblyWebSocket(usersId: usersId, message: push.push)
+                    }
             }
         }
         
@@ -119,5 +131,18 @@ final class PushController {
             
             return req.eventLoop.makeSucceededVoidFuture()
         }
+    }
+    
+    func assemblyWebSocket(usersId: [UUID], message: PushMessage) {
+        websocket.sockets.filter {usersId.contains($0.user)}
+            .forEach { ws in
+                let jsonData = try! JSONEncoder().encode(message)
+                let jsonString = String(data: jsonData, encoding: .utf8)!
+                ws.socket.send(jsonString)
+            }
+    }
+    
+    func assemblyWebSocket(usersId: UUID..., message: PushMessage) {
+        assemblyWebSocket(usersId: usersId, message: message)
     }
 }

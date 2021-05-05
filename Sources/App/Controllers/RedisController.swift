@@ -12,14 +12,18 @@ import APNS
 import Redis
 
 class RedisController {
+
+    let websocket: WebSocketController
     
-    init(_ app: Application) throws {
+    init(_ app: Application, websocket: WebSocketController) throws {
+        
+        self.websocket = websocket
         
         try app.boot() // TODO: We have to wait for the Redis package update
         
-        app.redis.subscribe(to: "chanal1") { channel, message in
+        app.redis.subscribe(to: "pushInfo") { channel, message in
             switch channel {
-            case "chanal1" :
+            case "pushInfo" :
                 if let m = message.string?.data(using: .utf8) {
                     do {
                         let result = try JSONDecoder().decode(RedisPushModel.self, from: m)
@@ -44,8 +48,9 @@ class RedisController {
         return DeviceInfo.query(on: app.db).group(.or) { group in
             model.users.forEach {group.filter(\.$user.$id == $0)}
         }.all().flatMap { devices -> EventLoopFuture<Void> in
-            
             self.assemblyDevice(app, devices: devices, message: model.message).flatten(on: app.eventLoopGroup.next())
+        }.map {
+            self.assemblyWebSocket(usersId: model.users, message: model.message)
         }
     }
     
@@ -53,6 +58,7 @@ class RedisController {
         var task: [EventLoopFuture<Void>] = []
         
         devices.forEach { device in
+            
             switch device.type {
             case .ios:
                 task.append(assemblyIOSDevice(app, device: device, message: message))
@@ -106,5 +112,14 @@ class RedisController {
             
             return app.eventLoopGroup.future()
         }
+    }
+    
+    func assemblyWebSocket(usersId: [UUID], message: RedisPushMessageModel) {
+        websocket.sockets.filter {usersId.contains($0.user)}
+            .forEach { ws in
+                let jsonData = try! JSONEncoder().encode(message)
+                let jsonString = String(data: jsonData, encoding: .utf8)!
+                ws.socket.send(jsonString)
+            }
     }
 }
