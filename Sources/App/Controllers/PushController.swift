@@ -10,10 +10,16 @@ import Fluent
 import FCM
 import APNS
 import JWT
+import Redis
 
 final class PushController {
     
-    init(_ app: Application) {
+    let websocket: WebSocketController
+    
+    init(_ app: Application, websocket: WebSocketController) {
+        
+        self.websocket = websocket
+        
         app.post(["push", "user"], use: pushToUser)
         
         app.post(["push", "topic"], use: pushToTopic)
@@ -25,6 +31,9 @@ final class PushController {
         let task: EventLoopFuture<Void> = DeviceInfo.query(on: req.db).filter(\.$user.$id == push.userID).all().flatMap { (devices) -> EventLoopFuture<Void> in
             
             return self.assemblyDevice(req, devices: devices, message: push.push).flatten(on: req.eventLoop)
+                .map {
+                    self.assemblyWebSocket(usersId: push.userID, message: push.push)
+                }
             
         }
         
@@ -52,6 +61,10 @@ final class PushController {
                 }
                 
                 return topicTask.flatten(on: req.eventLoop)
+                    .map {
+                        let usersId = users.map { $0.id! }
+                        self.assemblyWebSocket(usersId: usersId, message: push.push)
+                    }
             }
         }
         
@@ -68,48 +81,68 @@ final class PushController {
         devices.forEach { device in
             switch device.type {
             case .ios:
-                task.append(
-                    req.apns.send(
-                        .init(title: message.title, subtitle: nil, body: message.message),
-                        to: device.deviceID
-                    ).flatMapError{ (e) -> EventLoopFuture<Void> in
-                        if let error = e as? APNSwiftError.ResponseError {
-                            switch error {
-                            case .badRequest(.badDeviceToken):
-                                req.logger.info("Device \(String(describing: device.id!)) of type iOS has been removed from the database")
-                                return device.delete(on: req.db)
-                            default:
-                                break
-                            }
-                        }
-                        
-                        return req.eventLoop.makeSucceededVoidFuture()
-                    })
+                task.append(assemblyIOSDevice(req, device: device, message: message))
                 break
                 
             case .android:
-                let notification = FCMNotification(title: message.title, body: message.message)
-                let message = FCMMessage(token: device.deviceID, notification: notification)
-                
-                task.append(req.fcm.send(message).flatMapAlways{ (result) in
-                    switch result {
-                    case .failure(let e):
-                        if let error = e as? GoogleError,
-                           error.code == 404 || error.code == 410 {
-                            req.logger.info("Device \(String(describing: device.id!)) of type Android has been removed from the database")
-                            return device.delete(on: req.db)
-                        }
-                        break
-                    case .success(_):
-                        break
-                    }
-                    return req.eventLoop.makeSucceededVoidFuture()
-                })
+                task.append(assemblyAndroidDevice(req, device: device, message: message))
                 break
             }
-            
         }
         
         return task
+    }
+    
+    func assemblyIOSDevice(_ req: Request, device: DeviceInfo, message: PushMessage) -> EventLoopFuture<Void> {
+        req.apns.send(
+            .init(title: message.title, subtitle: nil, body: message.message),
+            to: device.deviceID
+        ).flatMapError{ (e) -> EventLoopFuture<Void> in
+            if let error = e as? APNSwiftError.ResponseError {
+                switch error {
+                case .badRequest(.badDeviceToken):
+                    req.logger.info("Device \(String(describing: device.id!)) of type iOS has been removed from the database")
+                    return device.delete(on: req.db)
+                default:
+                    break
+                }
+            }
+            
+            return req.eventLoop.makeSucceededVoidFuture()
+        }
+    }
+    
+    func assemblyAndroidDevice(_ req: Request, device: DeviceInfo, message: PushMessage) -> EventLoopFuture<Void> {
+        let notification = FCMNotification(title: message.title, body: message.message)
+        let message = FCMMessage(token: device.deviceID, notification: notification)
+        
+        return req.fcm.send(message).flatMapAlways{ (result) in
+            switch result {
+            case .failure(let e):
+                if let error = e as? GoogleError,
+                   error.code == 404 || error.code == 410 {
+                    req.logger.info("Device \(String(describing: device.id!)) of type Android has been removed from the database")
+                    return device.delete(on: req.db)
+                }
+                break
+            case .success(_):
+                break
+            }
+            
+            return req.eventLoop.makeSucceededVoidFuture()
+        }
+    }
+    
+    func assemblyWebSocket(usersId: [UUID], message: PushMessage) {
+        websocket.sockets.filter {usersId.contains($0.user)}
+            .forEach { ws in
+                let jsonData = try! JSONEncoder().encode(message)
+                let jsonString = String(data: jsonData, encoding: .utf8)!
+                ws.socket.send(jsonString)
+            }
+    }
+    
+    func assemblyWebSocket(usersId: UUID..., message: PushMessage) {
+        assemblyWebSocket(usersId: usersId, message: message)
     }
 }

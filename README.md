@@ -24,6 +24,10 @@ Action | [![Deploy](https://github.com/RTUITLab/ITLab-PushNotificationService/ac
         "login": "postgres",
         "password": "postgres",
         "databaseName": "notify"
+    },
+
+    "redis": {
+        "hostname": "localhost"
     }
 }
 
@@ -103,3 +107,4 @@ FCM (Firebase) | https://github.com/MihaelIsaev/FCM
 Fluent | https://github.com/vapor/fluent
 Fluent PostgreSQL | https://github.com/vapor/fluent-postgres-driver
 JWT | https://github.com/vapor/jwt
+Redis | https://github.com/vapor/redis
