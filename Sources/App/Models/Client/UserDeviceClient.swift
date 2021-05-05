@@ -7,7 +7,7 @@
 
 import Vapor
 
-struct AddUserDevicesClient: Content {
+struct UserDevicesClient: Content {
     let id: UUID
     let device: DeviceClient
 }

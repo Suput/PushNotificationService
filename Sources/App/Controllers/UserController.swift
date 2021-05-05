@@ -15,10 +15,12 @@ final class UserController {
         app.get(["user", "all"], use: getUsers)
         
         app.post("user", use: getUser)
+        
+        app.delete("user", "removeDevice", use: removeDevice)
     }
     
     func registrateDevice(_ req: Request) throws -> EventLoopFuture<UserDevicesServer> {
-        let user = try req.content.decode(AddUserDevicesClient.self)
+        let user = try req.content.decode(UserDevicesClient.self)
         
         return UserDevices.query(on: req.db).filter(\.$id == user.id).first().flatMap{ u -> EventLoopFuture<UserDevicesServer> in
             if let userDB = u {
@@ -134,6 +136,18 @@ final class UserController {
                 
                 return result
             }
+        }
+    }
+    
+    func removeDevice(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        let user = try req.content.decode(UserDevicesClient.self)
+        
+        return DeviceInfo.query(on: req.db).filter(\.$user.$id == user.id).all().flatMap { devices -> EventLoopFuture<HTTPStatus> in
+            if let device = devices.first(where: { $0.deviceID == user.device.deviceID }) {
+                return device.delete(on: req.db).transform(to: HTTPStatus.ok)
+            }
+            
+            return req.eventLoop.makeSucceededFuture(HTTPStatus.ok)
         }
     }
 }
