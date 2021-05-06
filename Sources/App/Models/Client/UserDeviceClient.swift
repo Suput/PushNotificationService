@@ -15,4 +15,3 @@ struct UserDevicesClient: Content {
 struct UserClient: Content {
     let id: UUID
 }
-

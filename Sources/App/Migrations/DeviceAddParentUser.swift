@@ -1,5 +1,5 @@
 //
-//  UpdateDevice.swift
+//  DeviceAddParentUser.swift
 //  
 //
 //  Created by Mikhail Ivanov on 24.03.2021.
@@ -7,7 +7,7 @@
 
 import Fluent
 
-struct Device_AddParentUser: Migration {
+struct DeviceAddParentUser: Migration {
     func prepare(on database: Database) -> EventLoopFuture<Void> {
         database.schema("devices")
             .field("user_id", .uuid, .required, .references("users", .id))
