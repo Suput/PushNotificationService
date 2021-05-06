@@ -103,7 +103,8 @@ final class PushController {
             if let error = err as? APNSwiftError.ResponseError {
                 switch error {
                 case .badRequest(.badDeviceToken):
-                    req.logger.info("Device \(String(describing: device.id!)) of type iOS has been removed from the database")
+                    req.logger.info("Device \(String(describing: device.id!))" +
+                    " of type iOS has been removed from the database")
                     return device.delete(on: req.db)
                 default:
                     break
@@ -123,7 +124,8 @@ final class PushController {
             case .failure(let err):
                 if let error = err as? GoogleError,
                    error.code == 404 || error.code == 410 {
-                    req.logger.info("Device \(String(describing: device.id!)) of type Android has been removed from the database")
+                    req.logger.info("Device \(String(describing: device.id!))" +
+                    " of type Android has been removed from the database")
                     return device.delete(on: req.db)
                 }
             case .success(_):

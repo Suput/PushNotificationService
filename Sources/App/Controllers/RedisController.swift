@@ -82,7 +82,8 @@ class RedisController {
             if let error = err as? APNSwiftError.ResponseError {
                 switch error {
                 case .badRequest(.badDeviceToken):
-                    app.logger.info("Device \(String(describing: device.id!)) of type iOS has been removed from the database")
+                    app.logger.info("Device \(String(describing: device.id!))" +
+                    " of type iOS has been removed from the database")
                     return device.delete(on: app.db)
                 default:
                     break
@@ -103,7 +104,8 @@ class RedisController {
             case .failure(let err):
                 if let error = err as? GoogleError,
                    error.code == 404 || error.code == 410 {
-                    app.logger.info("Device \(String(describing: device.id!)) of type Android has been removed from the database")
+                    app.logger.info("Device \(String(describing: device.id!))" +
+                    " of type Android has been removed from the database")
                     return device.delete(on: app.db)
                 }
             case .success(_):

@@ -52,7 +52,9 @@ final class UserController {
                                                                   type: element.type))
                             }
 
-                            devicesResult.append(DeviceServer(id: device.id!, deviceID: device.deviceID, type: device.type))
+                            devicesResult.append(DeviceServer(id: device.id!,
+                             deviceID: device.deviceID,
+                              type: device.type))
                             return UserDevicesServer(id: device.$user.id, devices: devicesResult)
 
                         }
