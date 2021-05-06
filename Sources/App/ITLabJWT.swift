@@ -25,9 +25,9 @@ struct ITLabPayload: JWTPayload {
     var expiration: ExpirationClaim
 
     var role: [String]
-    
+
     var scope: [String]
-    
+
     // Run any additional verification logic beyond
     // signature verification here.
     // Since we have an ExpirationClaim, we will

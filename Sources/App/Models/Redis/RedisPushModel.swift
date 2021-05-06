@@ -7,7 +7,6 @@
 
 import Vapor
 
-
 struct RedisPushModel: Content {
     var message: RedisPushMessageModel
     var users: [UUID]
