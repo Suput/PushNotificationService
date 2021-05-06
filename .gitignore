@@ -11,3 +11,13 @@ db.sqlite
 # Secrets
 Private/
 *.env
+
+.idea/misc.xml
+
+.idea/modules.xml
+
+.idea/PushNotificationService.iml
+
+.idea/vcs.xml
+
+.idea/workspace.xml

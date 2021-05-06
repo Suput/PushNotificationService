@@ -7,7 +7,6 @@
 
 import Vapor
 
-
 struct PushToUserClient: Content {
     let userID: UUID
     let push: PushMessage
