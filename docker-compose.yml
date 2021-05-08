@@ -16,8 +16,8 @@ version: '3.7'
   
 
 services:
-  app:
-    image: itlab-mob-notification:latest
+  push-service:
+    image: itlab-push-service
     environment:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       PATH_SECRETS: "/run/secrets/"

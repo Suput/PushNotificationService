@@ -9,10 +9,28 @@ trigger:
 resources:
 - repo: self
 
+name: $(BuildID)-$(Build.SourceBranchName)
+
 variables:
-  imageTags: |
+  ${{ if notIn(variables['Build.SourceBranchName'], 'main', 'develop') }}:
+    deployService: false
+    deployEnvironment: 'no'
+    imageTags: 'no'
+    serviceName: 'no'
+  ${{ if eq(variables['Build.SourceBranchName'], 'develop') }}:
+    deployService: true
+    deployEnvironment: development
+    imageTags: |
+      $(Build.BuildId)
+      develop
+    serviceName: itlab-develop_push-service
+  ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+    deployService: true
+    deployEnvironment: production
+    imageTags: |
       $(Build.BuildId)
       latest
+    serviceName: itlab_push-service
 
 stages:
 - stage: Build
@@ -34,12 +52,13 @@ stages:
 
 - stage: deploy
   displayName: deploy
+  condition: and(succeeded(), ${{variables.deployService}})
   jobs:
     - deployment: Deploy
       displayName: Deploy
       pool:
         vmImage: 'ubuntu-latest'
-      environment: production
+      environment: ${{variables.deployEnvironment}}
       strategy:
         runOnce:
           deploy:
@@ -49,5 +68,5 @@ stages:
                 inputs:
                   sshEndpoint: 'swarm manager'
                   runOptions: 'commands'
-                  commands: 'docker service update --image rtuitlab/itlab-push-service:$(Build.BuildId) itlab_push-service'
+                  commands: 'docker service update --image rtuitlab/itlab-push-service:$(Build.BuildId) ${{variables.serviceName}}'
                   readyTimeout: '20000'

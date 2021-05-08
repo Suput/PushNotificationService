@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  push-service:
+    environment:
+      - POSTGRES_URL=${ITLAB_PUSH_SERVICE_DB?Provice postgres connection string ITLAB_PUSH_SERVICE_DB}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+    ports:
+        - 5510:8080

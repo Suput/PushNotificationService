@@ -1,24 +1,24 @@
 version: '3.7'
 
 services:
-  app:
-    environment:
-        POSTGRES_URL: postgres://postgres:mysecretpassword@db:5432
-    build:
-      context: .
-    ports:
-      - '5510:8080'
+    push-service:
+        environment:
+            POSTGRES_URL: postgres://postgres:mysecretpassword@db:5432
+        build:
+            context: ${BACK_PUSH_SERVICE_CONTEXT:-.}/
+        ports:
+            - '8080:8080'
 
-  db:
-    image: postgres:latest
-    environment: 
-        POSTGRES_PASSWORD: mysecretpassword
+    db:
+        image: postgres:latest
+        environment: 
+            POSTGRES_PASSWORD: mysecretpassword
 
 secrets:
-  settings.json:
-    file: "Private/json/settings.json"
-  FCM.json:
-    file: "Private/json/FCM.json"
-  APNs.p8:
-    file: "Private/APNs.p8"
+    settings.json:
+        file: "Private/json/settings.json"
+    FCM.json:
+        file: "Private/json/FCM.json"
+    APNs.p8:
+        file: "Private/APNs.p8"
 
