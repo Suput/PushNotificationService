@@ -17,7 +17,7 @@ version: '3.7'
 
 services:
   push-service:
-    image: itlab-push-service
+    image: rtuitlab/itlab-push-service
     environment:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       PATH_SECRETS: "/run/secrets/"
