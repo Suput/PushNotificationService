@@ -1,6 +1,6 @@
 //
 //  JWT.swift
-//  
+//
 //
 //  Created by Mikhail Ivanov on 29.03.2021.
 //

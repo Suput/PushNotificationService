@@ -1,6 +1,9 @@
 included:
   - Sources
 
+trailing_whitespace:
+  ignores_empty_lines: true
+
 line_length:
   warning: 120
   ignores_comments: true

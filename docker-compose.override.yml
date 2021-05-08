@@ -1,0 +1,26 @@
+version: '3.7'
+
+services:
+  app:
+    environment:
+        POSTGRES_URL: "postgres://postgres:${POSTGRES_PASSWORD}@db:5432/public"
+    build:
+      context: .
+    ports:
+      - '8080:8080'
+
+  db:
+    image: postgres:latest
+    environment: 
+       - POSTGRES_PASSWORD
+
+secrets:
+  settings.json:
+    file: "Private/json/settings.json"
+  FCM.json:
+    file: "Private/json/FCM.json"
+  APNs.p8:
+    file: "Private/APNs.p8"
+
+x-environment:
+    POSTGRES_PASSWORD: mysecretpassword

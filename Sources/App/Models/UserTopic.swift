@@ -1,6 +1,6 @@
 //
 //  UserTopic.swift
-//  
+//
 //
 //  Created by Mikhail Ivanov on 02.04.2021.
 //
