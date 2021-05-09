@@ -16,9 +16,9 @@ services:
 
 secrets:
     settings.json:
-        file: "Private/json/settings.json"
+        file: "${BACK_PUSH_SERVICE_CONTEXT:-.}/Private/json/settings.json"
     FCM.json:
-        file: "Private/json/FCM.json"
+        file: "${BACK_PUSH_SERVICE_CONTEXT:-.}/Private/json/FCM.json"
     APNs.p8:
-        file: "Private/APNs.p8"
+        file: "${BACK_PUSH_SERVICE_CONTEXT:-.}/Private/APNs.p8"
 
