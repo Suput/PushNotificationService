@@ -18,55 +18,20 @@ public func configure(_ app: Application) throws {
     if let config = ConfigurationService.loadSettings() {
         app.logger.info("Configuration service")
         
-        app.apns.configuration = try .init(
-            authenticationMethod: .jwt(
-                key: .private(),
-                keyIdentifier: JWKIdentifier(string: config.apns.keyIdentifier),
-                teamIdentifier: config.apns.teamIdentifier
-            ),
-            topic: config.apns.topic,
-            environment: app.environment.isRelease ? .production : .sandbox
-        )
-        app.apns.configuration?.timeout = .minutes(1)
+        // APNs configuration
+        try config.apns(app)
         
-        if let fcm = ConfigurationService.loadSettingsFCM() {
-            app.fcm.configuration = .init(fromJSON: fcm)
-        }
+        // Firebase configuration
+        try config.fcm(app)
         
-        if let postgresURL = Environment.get("POSTGRES_URL") {
-            try app.databases.use(.postgres(url: postgresURL), as: .psql)
-            app.logger.info("Connection postgres")
-        } else {
-            app.databases.use(
-                .postgres(hostname: config.database.hostname,
-                          username: config.database.login,
-                          password: config.database.password,
-                          database: config.database.databaseName),
-                as: .psql)
-        }
+        // Postgres configuration
+        try config.postgres(app)
         
-        migration(app)
+        // Redis configuration
+        try config.redis(app)
         
-        if let redisURL = Environment.get("REDIS_URL") {
-            app.redis.configuration = try RedisConfiguration(hostname: redisURL)
-        } else {
-            app.redis.configuration = try RedisConfiguration(hostname: config.redis.hostname)
-        }
-        
-        if let jwtEnv = Environment.get("JWT_URL"),
-           let jwksURL = URL(string: jwtEnv) {
-            
-            let jwksData = try Data(contentsOf: jwksURL)
-            let jwks = try JSONDecoder().decode(JWKS.self, from: jwksData)
-            try app.jwt.signers.use(jwks: jwks)
-            
-        } else if let jwkURL = config.jwkURL,
-                  let jwksURL = URL(string: jwkURL) {
-            
-            let jwksData = try Data(contentsOf: jwksURL)
-            let jwks = try JSONDecoder().decode(JWKS.self, from: jwksData)
-            try app.jwt.signers.use(jwks: jwks)
-        }
+        // JWKs configuration
+        try config.jwt(app)
         
     } else {
         app.logger.critical("Missing config file")
@@ -74,25 +39,6 @@ public func configure(_ app: Application) throws {
     }
     
     try routes(app)
-}
-
-private func migration(_ app: Application) {
-    app.migrations.add(CreateDevice())
-    app.migrations.add(CreateUser())
-    app.migrations.add(DeviceAddParentUser())
-    app.migrations.add(CreateTopicNotification())
-    app.migrations.add(CreateUserTopic())
-    
-    app.autoMigrate().whenComplete { result in
-        switch result {
-        case .success():
-            app.logger.info("Migration complite")
-        case .failure(let error):
-            app.logger.error("\(error.localizedDescription)")
-        }
-        
-        
-    }
 }
 
 enum ServerError: Error {
