@@ -7,12 +7,11 @@
 
 import Vapor
 import APNS
+import JWT
 
 struct ConfigurationService: Content {
 
     let apns: APNsKey
-
-    let testDevice: String?
 
     let jwkURL: String?
 
@@ -95,5 +94,33 @@ extension ConfigurationService {
     }
     struct RedisSetting: Content {
         let hostname: String
+    }
+}
+
+extension ECDSAKey {
+    
+    public static func `private`() throws -> JWTKit.ECDSAKey {
+        let directory = DirectoryConfiguration.detect()
+        
+        var path: String = "Private/"
+        
+        if let secretPath = Environment.get("PATH_SECRETS") {
+            path = secretPath
+        }
+        
+        let file = "APNs.p8"
+        var fileURL = URL(fileURLWithPath: directory.workingDirectory)
+        
+        if Environment.get("PATH_SECRETS") != nil {
+            fileURL = fileURL.deletingLastPathComponent()
+        }
+        
+        fileURL = fileURL.appendingPathComponent(path, isDirectory: true)
+            .appendingPathComponent(file, isDirectory: false)
+        
+        guard let data = try? Data(contentsOf: fileURL) else {
+            throw APNSwiftError.SigningError.certificateFileDoesNotExist
+        }
+        return try .private(pem: data)
     }
 }
