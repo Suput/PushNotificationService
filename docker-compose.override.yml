@@ -7,7 +7,7 @@ services:
         build:
             context: ${BACK_PUSH_SERVICE_CONTEXT:-.}/
         ports:
-            - '8080:8080'
+            - ${ITLAB_PUSH_SERVICE_PORT:-8080}:${ITLAB_PUSH_SERVICE_PORT:-8080}
 
     db:
         image: postgres:latest
