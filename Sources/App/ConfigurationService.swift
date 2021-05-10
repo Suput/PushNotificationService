@@ -7,8 +7,15 @@
 
 import Vapor
 import APNS
+import FCM
 import JWT
 import Redis
+import Fluent
+import FluentPostgresDriver
+
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 struct ConfigurationService: Content {
 
@@ -25,16 +32,13 @@ struct ConfigurationService: Content {
 
         let directory = DirectoryConfiguration.detect()
 
+        let file = "settings.json"
+        var fileURL = URL(fileURLWithPath: directory.workingDirectory)
+        
         var path: String = "Private/json/"
 
         if let secretPath = Environment.get("PATH_SECRETS") {
             path = secretPath
-        }
-
-        let file = "settings.json"
-        var fileURL = URL(fileURLWithPath: directory.workingDirectory)
-
-        if Environment.get("PATH_SECRETS") != nil {
             fileURL = fileURL.deletingLastPathComponent()
         }
 
@@ -75,16 +79,13 @@ extension ConfigurationService {
     func fcm(_ app: Application) throws {
         let directory = DirectoryConfiguration.detect()
 
+        let file = "FCM.json"
+        var fileURL = URL(fileURLWithPath: directory.workingDirectory)
+        
         var path: String = "Private/json/"
 
         if let secretPath = Environment.get("PATH_SECRETS") {
             path = secretPath
-        }
-
-        let file = "FCM.json"
-        var fileURL = URL(fileURLWithPath: directory.workingDirectory)
-
-        if Environment.get("PATH_SECRETS") != nil {
             fileURL = fileURL.deletingLastPathComponent()
         }
 
@@ -116,7 +117,7 @@ extension ConfigurationService {
     
     func redis(_ app: Application) throws {
         if let redisURL = Environment.get("REDIS_URL") {
-            app.redis.configuration = try RedisConfiguration(hostname: redisURL)
+            app.redis.configuration = try RedisConfiguration(url: redisURL)
         } else {
             app.redis.configuration = try RedisConfiguration(hostname: redis.hostname)
         }
@@ -142,7 +143,6 @@ extension ConfigurationService {
     func postgres(_ app: Application) throws {
         if let postgresURL = Environment.get("POSTGRES_URL") {
             try app.databases.use(.postgres(url: postgresURL), as: .psql)
-            app.logger.info("Connection postgres")
         } else {
             app.databases.use(
                 .postgres(hostname: database.hostname,
