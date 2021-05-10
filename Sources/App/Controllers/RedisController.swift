@@ -35,15 +35,14 @@ class RedisController {
                         app.logger.error("redis: Incorrect message")
                     }
                 }
-            default:
-                break
+            default: break
             }
         }.whenComplete { result in
             switch result {
             case .success():
                 app.logger.info("Redis subscribe")
             case .failure(let error):
-                print(error)
+                app.logger.error("redis: \(error.localizedDescription)")
             }
         }
         
