@@ -12,38 +12,45 @@ import APNS
 import Redis
 
 class RedisController {
-
+    
     let websocket: WebSocketController
-
+    
     init(_ app: Application, websocket: WebSocketController) throws {
-
+        
         self.websocket = websocket
-
+        
         try app.boot() // TODO: We have to wait for the Redis package update
-
+        
         app.redis.subscribe(to: "pushInfo") { channel, message in
             switch channel {
             case "pushInfo" :
+                app.logger.info("redis: Message is received")
                 if let mess = message.string?.data(using: .utf8) {
                     do {
                         let result = try JSONDecoder().decode(RedisPushModel.self, from: mess)
-
+                        
                         try self.pushToUsers(app, model: result).whenSuccess {}
-
+                        
                     } catch {
-                        print("FAIL")
+                        app.logger.error("redis: Incorrect message")
                     }
                 }
-            default: break
+            default:
+                break
             }
-        }.whenComplete { _ in
-            app.logger.info("Redis subscribe")
+        }.whenComplete { result in
+            switch result {
+            case .success():
+                app.logger.info("Redis subscribe")
+            case .failure(let error):
+                print(error)
+            }
         }
-
+        
     }
-
+    
     func pushToUsers(_ app: Application, model: RedisPushModel) throws -> EventLoopFuture<Void> {
-
+        
         DeviceInfo.query(on: app.db).group(.or) { group in
             model.users.forEach {group.filter(\.$user.$id == $0)}
         }.all().flatMap { devices -> EventLoopFuture<Void> in
@@ -52,27 +59,27 @@ class RedisController {
             self.assemblyWebSocket(usersId: model.users, message: model.message)
         }
     }
-
+    
     func assemblyDevice(_ app: Application, devices: [DeviceInfo], message: RedisPushMessageModel)
     -> [EventLoopFuture<Void>] {
         var task: [EventLoopFuture<Void>] = []
-
+        
         devices.forEach { device in
-
+            
             switch device.type {
             case .ios:
                 task.append(assemblyIOSDevice(app, device: device, message: message))
-
+                
             case .android:
                 task.append(assemblyAndroidDevice(app, device: device, message: message))
-
+                
             }
-
+            
         }
-
+        
         return task
     }
-
+    
     func assemblyIOSDevice(_ app: Application, device: DeviceInfo, message: RedisPushMessageModel)
     -> EventLoopFuture<Void> {
         app.apns.send(
@@ -88,16 +95,16 @@ class RedisController {
                     break
                 }
             }
-
+            
             return app.eventLoopGroup.future()
         }
     }
-
+    
     func assemblyAndroidDevice(_ app: Application, device: DeviceInfo, message: RedisPushMessageModel)
     -> EventLoopFuture<Void> {
         let notification = FCMNotification(title: message.title, body: message.body)
         let message = FCMMessage(token: device.deviceID, notification: notification)
-
+        
         return app.fcm.send(message).flatMapAlways { (result) in
             switch result {
             case .failure(let err):
@@ -109,11 +116,11 @@ class RedisController {
             case .success(_):
                 break
             }
-
+            
             return app.eventLoopGroup.future()
         }
     }
-
+    
     func assemblyWebSocket(usersId: [UUID], message: RedisPushMessageModel) {
         websocket.sockets.filter {usersId.contains($0.user)}
             .forEach { wSocket in
