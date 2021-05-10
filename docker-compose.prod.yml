@@ -4,7 +4,7 @@ services:
   push-service:
     environment:
       - POSTGRES_URL=${ITLAB_PUSH_SERVICE_DB?Provice postgres connection string ITLAB_PUSH_SERVICE_DB}
-      - REDIS_URL=${ITLAB_PUSH_SERVICE_REDIS:-localhost}
+      - REDIS_URL=${ITLAB_PUSH_SERVICE_REDIS:-redis://localhost:6379}
       - JWT_URL=${ITLAB_PUSH_SERVICE_JWT:-}
     logging:
       driver: "json-file"
