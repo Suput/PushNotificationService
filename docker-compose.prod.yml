@@ -4,10 +4,15 @@ services:
   push-service:
     environment:
       - POSTGRES_URL=${ITLAB_PUSH_SERVICE_DB?Provice postgres connection string ITLAB_PUSH_SERVICE_DB}
+      - REDIS_URL=${ITLAB_PUSH_SERVICE_REDIS:-localhost}
+      - JWT_URL = ${ITLAB_PUSH_SERVICE_JWT:-}
     logging:
       driver: "json-file"
       options:
         max-size: "200k"
         max-file: "10"
-    ports:
-        - ${ITLAB_PUSH_SERVICE_PORT:-8080}:${ITLAB_PUSH_SERVICE_PORT:-8080}
+    networks:
+    - net
+networks:
+  net:
+    driver: overlay

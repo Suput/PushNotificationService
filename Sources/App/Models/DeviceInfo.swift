@@ -45,4 +45,10 @@ final class DeviceInfo: Model {
         self.type = client.type
         self.deviceID = client.deviceID
     }
+    
+    init(device client: DeviceClient, user: UserDevices) {
+        self.type = client.type
+        self.deviceID = client.deviceID
+        self.$user.id = user.id!
+    }
 }

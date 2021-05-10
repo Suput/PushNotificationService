@@ -36,3 +36,21 @@ struct ITLabPayload: JWTPayload {
         try self.expiration.verifyNotExpired()
     }
 }
+
+extension ITLabPayload {
+    static func checkJWT(_ req: Request) throws -> UUID {
+        let jwt = try req.jwt.verify(as: ITLabPayload.self)
+        
+        guard let userID = UUID(uuidString: jwt.subject.value)
+        else {
+            req.logger.error("Invalid user id")
+            throw Abort(.unauthorized)
+        }
+        
+        return userID
+    }
+    
+    static func checkJWT(_ req: Request) throws -> ITLabPayload {
+        return try req.jwt.verify(as: ITLabPayload.self)
+    }
+}

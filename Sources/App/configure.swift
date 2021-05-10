@@ -16,51 +16,22 @@ import FluentPostgresDriver
 public func configure(_ app: Application) throws {
     
     if let config = ConfigurationService.loadSettings() {
-        app.logger.info("Configuration APNs and Database")
+        app.logger.info("Configuration service")
         
-        app.apns.configuration = try .init(
-            authenticationMethod: .jwt(
-                key: .private(),
-                keyIdentifier: JWKIdentifier(string: config.apns.keyIdentifier),
-                teamIdentifier: config.apns.teamIdentifier
-            ),
-            topic: config.apns.topic,
-            environment: .sandbox
-        )
-        app.apns.configuration?.timeout = .minutes(1)
+        // APNs configuration
+        try config.apns(app)
         
-        if let fcm = ConfigurationService.loadSettingsFCM() {
-            app.fcm.configuration = .init(fromJSON: fcm)
-        }
+        // Firebase configuration
+        try config.fcm(app)
         
-        if let postgresURL = Environment.get("POSTGRES_URL") {
-            try app.databases.use(.postgres(url: postgresURL), as: .psql)
-            app.logger.info("Connection postgres")
-        } else {
-            app.databases.use(
-                .postgres(hostname: config.database.hostname,
-                          username: config.database.login,
-                          password: config.database.password,
-                          database: config.database.databaseName),
-                as: .psql)
-        }
+        // Postgres configuration
+        try config.postgres(app)
         
-        migration(app)
+        // Redis configuration
+        try config.redis(app)
         
-        app.redis.configuration = try RedisConfiguration(hostname: config.redis.hostname)
-        
-        if let jwkURL = config.jwkURL {
-            let jwksData = try Data(
-                contentsOf: URL(string: jwkURL)!
-            )
-            
-            // Decode the downloaded JSON.
-            let jwks = try JSONDecoder().decode(JWKS.self, from: jwksData)
-            
-            // Create signers and add JWKS.
-            try app.jwt.signers.use(jwks: jwks)
-            //        print(jwks)
-        }
+        // JWKs configuration
+        try config.jwt(app)
         
     } else {
         app.logger.critical("Missing config file")
@@ -68,46 +39,6 @@ public func configure(_ app: Application) throws {
     }
     
     try routes(app)
-}
-
-private func migration(_ app: Application) {
-    app.migrations.add(CreateDevice())
-    app.migrations.add(CreateUser())
-    app.migrations.add(DeviceAddParentUser())
-    app.migrations.add(CreateTopicNotification())
-    app.migrations.add(CreateUserTopic())
-    
-    app.autoMigrate().whenSuccess {
-        app.logger.info("MIGRATE")
-    }
-}
-
-extension ECDSAKey {
-    
-    public static func `private`() throws -> JWTKit.ECDSAKey {
-        let directory = DirectoryConfiguration.detect()
-        
-        var path: String = "Private/"
-        
-        if let secretPath = Environment.get("PATH_SECRETS") {
-            path = secretPath
-        }
-        
-        let file = "APNs.p8"
-        var fileURL = URL(fileURLWithPath: directory.workingDirectory)
-        
-        if Environment.get("PATH_SECRETS") != nil {
-            fileURL = fileURL.deletingLastPathComponent()
-        }
-        
-        fileURL = fileURL.appendingPathComponent(path, isDirectory: true)
-            .appendingPathComponent(file, isDirectory: false)
-        
-        guard let data = try? Data(contentsOf: fileURL) else {
-            throw APNSwiftError.SigningError.certificateFileDoesNotExist
-        }
-        return try .private(pem: data)
-    }
 }
 
 enum ServerError: Error {
