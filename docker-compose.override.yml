@@ -4,7 +4,7 @@ services:
     push-service:
         environment:
             POSTGRES_URL: postgres://postgres:mysecretpassword@db:5432
-            REDIS_URL: redis://red:6379
+            REDIS_URL: redis://redis:6379
         build:
             context: ${BACK_PUSH_SERVICE_CONTEXT:-.}/
         ports:
@@ -15,7 +15,7 @@ services:
         environment: 
             POSTGRES_PASSWORD: mysecretpassword
             
-    red:
+    redis:
         image: redis:latest
         ports: 
             - 6379:6379
