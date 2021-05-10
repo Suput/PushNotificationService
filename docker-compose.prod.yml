@@ -11,5 +11,8 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
-    ports:
-        - ${ITLAB_PUSH_SERVICE_PORT:-8080}:${ITLAB_PUSH_SERVICE_PORT:-8080}
+    networks:
+    - net
+networks:
+  net:
+    driver: overlay
