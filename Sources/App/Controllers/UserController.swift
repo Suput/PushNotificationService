@@ -9,14 +9,18 @@ import Vapor
 import Fluent
 
 final class UserController {
+    
     init(_ app: Application) {
-        app.post(["user", "addDevice"], use: registrateDevice)
+        
+        app.group("user") { route in
+            route.post(use: getUser)
+            
+            route.get("all", use: getUsers)
+            
+            route.post("addDevice", use: registrateDevice)
 
-        app.get(["user", "all"], use: getUsers)
-
-        app.post("user", use: getUser)
-
-        app.delete("user", "removeDevice", use: removeDevice)
+            route.delete("removeDevice", use: removeDevice)
+        }
     }
 
     func registrateDevice(_ req: Request) throws -> EventLoopFuture<UserDevicesServer> {

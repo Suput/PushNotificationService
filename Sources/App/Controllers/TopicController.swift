@@ -11,14 +11,16 @@ import Fluent
 final class TopicController {
 
     init(_ app: Application) {
+        
+        app.group("topic") { route in
+            route.get(use: getTopics)
 
-        app.get("topic", use: getTopics)
+            route.post("create", use: createTopic)
 
-        app.post(["topic", "create"], use: createTopic)
+            route.post("subscribe", use: subscribeTopic)
 
-        app.post(["topic", "subscribe"], use: subscribeTopic)
-
-        app.post(["topic", "unsubscribe"], use: unsubscribeTopic)
+            route.post("unsubscribe", use: unsubscribeTopic)
+        }
     }
 
     func createTopic(_ req: Request) throws -> EventLoopFuture<TopicServer> {

@@ -19,10 +19,12 @@ final class PushController {
     init(_ app: Application, websocket: WebSocketController) {
 
         self.websocket = websocket
+        
+        app.group("push") { route in
+            route.post("user", use: pushToUser)
 
-        app.post(["push", "user"], use: pushToUser)
-
-        app.post(["push", "topic"], use: pushToTopic)
+            route.post("topic", use: pushToTopic)
+        }
     }
 
     func pushToUser(_ req: Request) throws -> HTTPStatus {
