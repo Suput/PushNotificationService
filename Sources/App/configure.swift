@@ -1,16 +1,4 @@
 import Vapor
-import JWTKit
-import APNS
-import FCM
-import JWT
-import Redis
-
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
-
-import Fluent
-import FluentPostgresDriver
 
 // configures your application
 public func configure(_ app: Application) throws {
