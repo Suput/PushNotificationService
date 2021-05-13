@@ -125,18 +125,14 @@ extension ConfigurationService {
     
     func jwt(_ app: Application) throws {
         if let jwtEnv = Environment.get("JWT_URL"),
-           let jwksURL = URL(string: jwtEnv) {
+           let jwkURL = URL(string: jwtEnv) {
             
-            let jwksData = try Data(contentsOf: jwksURL)
-            let jwks = try JSONDecoder().decode(JWKS.self, from: jwksData)
-            try app.jwt.signers.use(jwks: jwks)
+            app.jwt.itLab.url = jwkURL
             
         } else if let jwkURL = jwkURL,
-                  let jwksURL = URL(string: jwkURL) {
+                  let jwkURL = URL(string: jwkURL) {
             
-            let jwksData = try Data(contentsOf: jwksURL)
-            let jwks = try JSONDecoder().decode(JWKS.self, from: jwksData)
-            try app.jwt.signers.use(jwks: jwks)
+            app.jwt.itLab.url = jwkURL
         }
     }
     

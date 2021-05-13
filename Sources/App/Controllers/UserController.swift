@@ -12,7 +12,7 @@ final class UserController {
     
     init(_ app: Application) {
         
-        app.group("user") { route in
+        app.grouped(JWTMiddleware()).group("user") { route in
             route.post(use: getUser)
             
             route.get("all", use: getUsers)
@@ -24,7 +24,7 @@ final class UserController {
     }
     
     func registrateDevice(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
-        let userID: UUID = try ITLabPayload.checkJWT(req)
+        let userID = try req.auth.require(UserAuthInfo.self).id
         
         let deviceClient = try req.content.decode(DeviceClient.self)
         
@@ -76,8 +76,6 @@ final class UserController {
     
     func getUsers(_ req: Request) throws -> EventLoopFuture<[UserDevicesServer]> {
         
-        _ = try ITLabPayload.checkJWT(req) as ITLabPayload
-        
         var users: [UserDevicesServer] = []
         
         return UserDevices.query(on: req.db).all().flatMap { (usersDB) -> EventLoopFuture<[UserDevicesServer]> in
@@ -116,8 +114,6 @@ final class UserController {
     
     func getUser(_ req: Request) throws -> EventLoopFuture<UserDevicesServer> {
         
-        _ = try ITLabPayload.checkJWT(req) as ITLabPayload
-        
         let userClient = try req.content.decode(UserClient.self)
         
         return UserDevices.query(on: req.db).filter(\.$id == userClient.id).first()
@@ -147,8 +143,7 @@ final class UserController {
     }
     
     func removeDevice(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
-        
-        let userID: UUID = try ITLabPayload.checkJWT(req)
+        let userID = try req.auth.require(UserAuthInfo.self).id
         
         let device = try req.content.decode(DeviceClient.self)
         

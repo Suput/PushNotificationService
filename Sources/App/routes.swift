@@ -2,7 +2,7 @@ import Vapor
 
 func routes(_ app: Application) throws {
 
-    app.get { req -> String in
+    app.get { _ -> String in
         return "I'm push service"
     }
     
