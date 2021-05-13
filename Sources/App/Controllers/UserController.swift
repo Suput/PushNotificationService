@@ -12,7 +12,9 @@ final class UserController {
     
     init(_ app: Application) {
         
-        app.grouped(JWTMiddleware()).group("user") { route in
+        app.grouped(JWTMiddleware(),
+                    UserAuthInfo.guardMiddleware(throwing: Abort(.unauthorized)))
+            .group("user") { route in
             route.post(use: getUser)
             
             route.get("all", use: getUsers)
