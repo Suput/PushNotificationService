@@ -15,14 +15,14 @@ final class UserController {
         app.grouped(JWTMiddleware(),
                     UserAuthInfo.guardMiddleware(throwing: Abort(.unauthorized)))
             .group("user") { route in
-            route.post(use: getUser)
-            
-            route.get("all", use: getUsers)
-            
-            route.post("addDevice", use: registrateDevice)
-            
-            route.delete("removeDevice", use: removeDevice)
-        }
+                route.post(use: getUser)
+                
+                route.get("all", use: getUsers)
+                
+                route.post("addDevice", use: registrateDevice)
+                
+                route.delete("removeDevice", use: removeDevice)
+            }
     }
     
     func registrateDevice(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
@@ -85,29 +85,20 @@ final class UserController {
             var deviceQuery: [EventLoopFuture<Void>] = []
             
             usersDB.forEach { (userDB) in
-                deviceQuery.append(userDB.$devices.get(reload: true, on: req.db)
-                                    .and(userDB.$topics.get(reload: true, on: req.db)).map { resultDB in
-                                        var result = UserDevicesServer(id: userDB.id!)
-                                        
-                                        resultDB.0.forEach { (element) in
-                                            if result.devices == nil {
-                                                result.devices = []
-                                            }
-                                            result.devices?.append(.init(id: element.id!,
-                                                                         deviceID: element.deviceID,
-                                                                         type: element.type))
-                                        }
-                                        
-                                        resultDB.1.forEach { (element) in
-                                            if result.topics == nil {
-                                                result.topics = []
-                                            }
-                                            result.topics?.append(.init(id: element.id!,
-                                                                        topicName: element.nameTopic))
-                                        }
-                                        
-                                        users.append(result)
-                                    })
+                deviceQuery.append(userDB.$devices.get(reload: true, on: req.db).map { deviceDB in
+                    var result = UserDevicesServer(id: userDB.id!)
+                    
+                    deviceDB.forEach { (element) in
+                        if result.devices == nil {
+                            result.devices = []
+                        }
+                        result.devices?.append(.init(id: element.id!,
+                                                     deviceID: element.deviceID,
+                                                     type: element.type))
+                    }
+                    
+                    users.append(result)
+                })
             }
             
             return deviceQuery.flatten(on: req.eventLoop).transform(to: users)
@@ -122,21 +113,14 @@ final class UserController {
             .unwrap(or: Abort(.notFound)).flatMap { (userDB) -> EventLoopFuture<UserDevicesServer> in
                 
                 return userDB.$devices.get(reload: true, on: req.db)
-                    .and(userDB.$topics.get(reload: true, on: req.db)).map { resultDB -> (UserDevicesServer) in
+                    .map { devicesDB -> (UserDevicesServer) in
                         var result = UserDevicesServer(id: userDB.id!)
                         
-                        resultDB.0.forEach { (element) in
+                        devicesDB.forEach { (element) in
                             if result.devices == nil {
                                 result.devices = []
                             }
                             result.devices?.append(.init(id: element.id!, deviceID: element.deviceID, type: element.type))
-                        }
-                        
-                        resultDB.1.forEach { (element) in
-                            if result.topics == nil {
-                                result.topics = []
-                            }
-                            result.topics?.append(.init(id: element.id!, topicName: element.nameTopic))
                         }
                         
                         return result

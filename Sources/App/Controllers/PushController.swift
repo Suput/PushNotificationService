@@ -3,7 +3,7 @@
 //
 //
 //  Created by Mikhail Ivanov on 23.03.2021.
-//
+//Administrator
 
 import Vapor
 import Fluent
@@ -20,10 +20,11 @@ final class PushController {
 
         self.websocket = websocket
         
-        app.group("push") { route in
+        app.grouped(JWTMiddleware(),
+                    CheckRoleMiddleware(role: "Administrator"))
+            .group("push") { route in
+                
             route.post("user", use: pushToUser)
-
-            route.post("topic", use: pushToTopic)
         }
     }
 
@@ -35,43 +36,9 @@ final class PushController {
         .flatMap { (devices) -> EventLoopFuture<Void> in
 
             self.assemblyDevice(req, devices: devices, message: push.push).flatten(on: req.eventLoop)
-                .map {
-                    self.assemblyWebSocket(usersId: push.userID, message: push.push)
-                }
 
-        }
-
-        task.whenComplete { (_) in
-            req.logger.info("Notification requests completed")
-        }
-
-        return .ok
-    }
-
-    func pushToTopic(_ req: Request) throws -> HTTPStatus {
-        let push = try req.content.decode(PushToTopicClient.self)
-
-        let task: EventLoopFuture<Void> = TopicNotification.query(on: req.db)
-        .filter(\.$id == push.topicID).first()
-        .unwrap(or: Abort(.notFound)).flatMap { (topic) -> EventLoopFuture<Void> in
-
-            topic.$users.get(reload: true, on: req.db).flatMap { (users) -> EventLoopFuture<Void> in
-
-                var topicTask: [EventLoopFuture<Void>] = []
-
-                users.forEach { user in
-                    topicTask.append(user.$devices.get(on: req.db).flatMap { (devices) -> EventLoopFuture<Void> in
-
-                        self.assemblyDevice(req, devices: devices, message: push.push).flatten(on: req.eventLoop)
-                    })
-                }
-
-                return topicTask.flatten(on: req.eventLoop)
-                    .map {
-                        let usersId = users.map { $0.id! }
-                        self.assemblyWebSocket(usersId: usersId, message: push.push)
-                    }
-            }
+        }.map {
+            self.assemblyWebSocket(usersId: push.userID, message: push.push)
         }
 
         task.whenComplete { (_) in

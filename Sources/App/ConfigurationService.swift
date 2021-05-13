@@ -152,11 +152,15 @@ extension ConfigurationService {
     }
     
     private func migration(_ app: Application) {
-        app.migrations.add(CreateDevice())
-        app.migrations.add(CreateUser())
-        app.migrations.add(DeviceAddParentUser())
-        app.migrations.add(CreateTopicNotification())
-        app.migrations.add(CreateUserTopic())
+        app.migrations.add(CreateDevice(),
+                           CreateUser(),
+                           DeviceAddParentUser())
+        
+        CreateTopicNotification().revert(on: app.db)
+            .and(CreateUserTopic().revert(on: app.db))
+            .whenSuccess { _ in
+            app.logger.info("Revert token")
+        }
         
         app.autoMigrate().whenComplete { result in
             switch result {
