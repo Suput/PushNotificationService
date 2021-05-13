@@ -3,7 +3,7 @@
 //
 //
 //  Created by Mikhail Ivanov on 23.03.2021.
-//Administrator
+//
 
 import Vapor
 import Fluent

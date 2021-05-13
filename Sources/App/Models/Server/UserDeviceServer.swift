@@ -11,8 +11,6 @@ struct UserDevicesServer: Content {
     var id: UUID
     var devices: [DeviceServer]?
 
-//    var topics: [TopicServer]?
-
     init(id: UUID, devices: [DeviceServer]) {
         self.init(id: id)
 

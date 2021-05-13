@@ -1,6 +1,6 @@
 //
 //  CheckRoleMiddleware.swift
-//  
+//
 //
 //  Created by Mikhail Ivanov on 13.05.2021.
 //

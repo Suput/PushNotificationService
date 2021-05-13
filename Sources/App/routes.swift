@@ -10,8 +10,6 @@ func routes(_ app: Application) throws {
 
     _ = UserController(app)
 
-//    _ = TopicController(app)
-
     _ = PushController(app, websocket: socket)
 
     _ = try RedisController(app, websocket: socket)
