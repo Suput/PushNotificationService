@@ -9,8 +9,6 @@ import Vapor
 import Fluent
 import FCM
 import APNS
-import JWT
-import Redis
 
 final class PushController {
 
