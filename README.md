@@ -3,7 +3,7 @@
 
 Status | main | develop 
 --- | --- | ---
-Action | [![Deploy](https://github.com/RTUITLab/ITLab-PushNotificationService/actions/workflows/build-main.yml/badge.svg?branch=main)](https://github.com/RTUITLab/ITLab-PushNotificationService/actions/workflows/build-main.yml) | [![Build Status](https://dev.azure.com/rtuitlab/RTU%20IT%20Lab/_apis/build/status/ITLab/ITLab-PushNotificationService?branchName=develop&stageName=Build%20image&jobName=Build)](https://dev.azure.com/rtuitlab/RTU%20IT%20Lab/_build/latest?definitionId=164&branchName=develop)
+Action | [![Build Status](https://dev.azure.com/rtuitlab/RTU%20IT%20Lab/_apis/build/status/ITLab/ITLab-PushNotificationService?branchName=main)](https://dev.azure.com/rtuitlab/RTU%20IT%20Lab/_build/latest?definitionId=164&branchName=main) | [![Build Status](https://dev.azure.com/rtuitlab/RTU%20IT%20Lab/_apis/build/status/ITLab/ITLab-PushNotificationService?branchName=develop&stageName=Build%20image&jobName=Build)](https://dev.azure.com/rtuitlab/RTU%20IT%20Lab/_build/latest?definitionId=164&branchName=develop)
 ## Конфигурация
 Для работы с сервисом вам понадобиться конфигруационный файл `settings.json`, `FCM.json` и `APNs.p8`
 
