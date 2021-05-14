@@ -15,22 +15,20 @@ public func configure(_ app: Application) throws {
         // Postgres configuration
         try config.postgres(app)
         
-        // Redis configuration
-        try config.redis(app)
-        
         // JWKs configuration
         try config.jwt(app)
+        
+        try routes(app, config: config)
         
     } else {
         app.logger.critical("Missing config file")
         throw ServerError.missingConfiguration
     }
     
-    try routes(app)
 }
 
 enum ServerError: Error {
-    case missingConfiguration
+    case missingConfiguration, noRedisConnection
 }
 
 extension ServerError: LocalizedError {
@@ -40,6 +38,9 @@ extension ServerError: LocalizedError {
             return NSLocalizedString("There is no settings.json file," +
                                         "in which the main server configuration is written",
                                      comment: "Config file missing")
+        case .noRedisConnection:
+            return NSLocalizedString("There is no connection to the Redis service",
+                                     comment: "No connection to redis")
         }
     }
 }

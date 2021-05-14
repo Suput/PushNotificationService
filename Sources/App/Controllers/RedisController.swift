@@ -14,38 +14,53 @@ import Redis
 class RedisController {
     
     let websocket: WebSocketController
+    let config: ConfigurationService
     
-    init(_ app: Application, websocket: WebSocketController) throws {
+    init(_ app: Application, websocket: WebSocketController, config: ConfigurationService) throws {
         
         self.websocket = websocket
+        self.config = config
         
-        try app.boot() // TODO: We have to wait for the Redis package update
-        
-        app.redis.subscribe(to: "pushInfo") { channel, message in
-            switch channel {
-            case "pushInfo" :
-                app.logger.info("redis: Message is received")
-                if let mess = message.string?.data(using: .utf8) {
-                    do {
-                        let result = try JSONDecoder().decode(RedisPushModel.self, from: mess)
-                        
-                        try self.pushToUsers(app, model: result).whenSuccess {}
-                        
-                    } catch {
-                        app.logger.error("redis: Incorrect message")
+        try redisConnected(app) { redis in
+            redis.subscribe(to: "pushInfo") { channel, message in
+                switch channel {
+                case "pushInfo" :
+                    app.logger.info("redis: Message is received")
+                    if let mess = message.string?.data(using: .utf8) {
+                        do {
+                            let result = try JSONDecoder().decode(RedisPushModel.self, from: mess)
+                            
+                            try self.pushToUsers(app, model: result).whenSuccess {}
+                            
+                        } catch {
+                            app.logger.error("redis: Incorrect message")
+                        }
                     }
+                default: break
                 }
-            default: break
-            }
-        }.whenComplete { result in
-            switch result {
-            case .success():
-                app.logger.info("Redis subscribe")
-            case .failure(let error):
-                app.logger.error("redis: \(error.localizedDescription)")
+            }.whenComplete { result in
+                switch result {
+                case .success():
+                    app.logger.info("Redis subscribe")
+                case .failure(let error):
+                    app.logger.error("redis: \(error.localizedDescription)")
+                }
             }
         }
         
+        
+    }
+    
+    func redisConnected(_ app: Application, connected: @escaping (RedisConnection) -> ()) throws {
+        let eventLoop = app.eventLoopGroup.next()
+        try RedisConnection.make(configuration: config.redisConfig(app),
+                                 boundEventLoop: eventLoop)
+            .flatMapErrorThrowing{ error in
+                app.logger.error("Not redis connection: \(error.localizedDescription)")
+                throw ServerError.noRedisConnection
+            }.map({ redis in
+                connected(redis)
+            }).wait()
     }
     
     func pushToUsers(_ app: Application, model: RedisPushModel) throws -> EventLoopFuture<Void> {
@@ -85,20 +100,20 @@ class RedisController {
         return app.apns.send(.init(alert: alert,
                                    badge: 0,
                                    sound: .normal("cow.wav")),
-                      to: device.deviceID)
-        .flatMapError { (err) -> EventLoopFuture<Void> in
-            if let error = err as? APNSwiftError.ResponseError {
-                switch error {
-                case .badRequest(.badDeviceToken):
-                    app.logger.info("Device \(String(describing: device.id!)) of type iOS has been removed from the database")
-                    return device.delete(on: app.db)
-                default:
-                    break
+                             to: device.deviceID)
+            .flatMapError { (err) -> EventLoopFuture<Void> in
+                if let error = err as? APNSwiftError.ResponseError {
+                    switch error {
+                    case .badRequest(.badDeviceToken):
+                        app.logger.info("Device \(String(describing: device.id!)) of type iOS has been removed from the database")
+                        return device.delete(on: app.db)
+                    default:
+                        break
+                    }
                 }
+                
+                return app.eventLoopGroup.future()
             }
-            
-            return app.eventLoopGroup.future()
-        }
     }
     
     func assemblyAndroidDevice(_ app: Application, device: DeviceInfo, message: RedisPushMessageModel)
