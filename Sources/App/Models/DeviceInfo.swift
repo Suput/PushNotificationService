@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Mikhail Ivanov on 22.03.2021.
 //
@@ -44,5 +44,11 @@ final class DeviceInfo: Model {
     init(device client: DeviceClient) {
         self.type = client.type
         self.deviceID = client.deviceID
+    }
+    
+    init(device client: DeviceClient, user: UserDevices) {
+        self.type = client.type
+        self.deviceID = client.deviceID
+        self.$user.id = user.id!
     }
 }
