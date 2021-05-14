@@ -103,16 +103,33 @@ extension ConfigurationService {
     }
     
     func apns(_ app: Application) throws {
-        app.apns.configuration = try .init(
-            authenticationMethod: .jwt(
-                key: .private(),
-                keyIdentifier: JWKIdentifier(string: apns.keyIdentifier),
-                teamIdentifier: apns.teamIdentifier
-            ),
-            topic: apns.topic,
-            environment: app.environment.isRelease ? .production : .sandbox
-        )
-        app.apns.configuration?.timeout = .minutes(1)
+        switch app.environment {
+        case .production:
+            app.apns.configuration = try .init(
+                authenticationMethod: .jwt(
+                    key: .private(),
+                    keyIdentifier: JWKIdentifier(string: apns.keyIdentifier),
+                    teamIdentifier: apns.teamIdentifier
+                ),
+                topic: apns.topic,
+                environment: .production
+            )
+            
+            app.apns.configuration?.timeout = .minutes(1)
+            
+        default:
+            app.apns.configuration = try .init(
+                authenticationMethod: .jwt(
+                    key: .private(),
+                    keyIdentifier: JWKIdentifier(string: apns.keyIdentifier),
+                    teamIdentifier: apns.teamIdentifier
+                ),
+                topic: apns.topic,
+                environment: .sandbox
+            )
+            
+            app.apns.configuration?.timeout = .seconds(10)
+        }
     }
     
     func redis(_ app: Application) throws {
@@ -181,14 +198,11 @@ extension ECDSAKey {
         
         var path: String = "Private/"
         
-        if let secretPath = Environment.get("PATH_SECRETS") {
-            path = secretPath
-        }
-        
         let file = "APNs.p8"
         var fileURL = URL(fileURLWithPath: directory.workingDirectory)
         
-        if Environment.get("PATH_SECRETS") != nil {
+        if let secretPath = Environment.get("PATH_SECRETS") {
+            path = secretPath
             fileURL = fileURL.deletingLastPathComponent()
         }
         
