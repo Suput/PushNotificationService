@@ -125,18 +125,14 @@ extension ConfigurationService {
     
     func jwt(_ app: Application) throws {
         if let jwtEnv = Environment.get("JWT_URL"),
-           let jwksURL = URL(string: jwtEnv) {
+           let jwkURL = URL(string: jwtEnv) {
             
-            let jwksData = try Data(contentsOf: jwksURL)
-            let jwks = try JSONDecoder().decode(JWKS.self, from: jwksData)
-            try app.jwt.signers.use(jwks: jwks)
+            app.jwt.itLab.url = jwkURL
             
         } else if let jwkURL = jwkURL,
-                  let jwksURL = URL(string: jwkURL) {
+                  let jwkURL = URL(string: jwkURL) {
             
-            let jwksData = try Data(contentsOf: jwksURL)
-            let jwks = try JSONDecoder().decode(JWKS.self, from: jwksData)
-            try app.jwt.signers.use(jwks: jwks)
+            app.jwt.itLab.url = jwkURL
         }
     }
     
@@ -156,11 +152,15 @@ extension ConfigurationService {
     }
     
     private func migration(_ app: Application) {
-        app.migrations.add(CreateDevice())
-        app.migrations.add(CreateUser())
-        app.migrations.add(DeviceAddParentUser())
-        app.migrations.add(CreateTopicNotification())
-        app.migrations.add(CreateUserTopic())
+        app.migrations.add(CreateDevice(),
+                           CreateUser(),
+                           DeviceAddParentUser())
+        
+        CreateTopicNotification().revert(on: app.db)
+            .and(CreateUserTopic().revert(on: app.db))
+            .whenSuccess { _ in
+            app.logger.info("Revert token")
+        }
         
         app.autoMigrate().whenComplete { result in
             switch result {
