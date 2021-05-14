@@ -81,10 +81,12 @@ class RedisController {
     
     func assemblyIOSDevice(_ app: Application, device: DeviceInfo, message: RedisPushMessageModel)
     -> EventLoopFuture<Void> {
-        app.apns.send(
-            .init(title: message.title, subtitle: nil, body: message.body),
-            to: device.deviceID
-        ).flatMapError { (err) -> EventLoopFuture<Void> in
+        let alert = APNSwiftAlert(title: message.title, body: message.body)
+        return app.apns.send(.init(alert: alert,
+                                   badge: 0,
+                                   sound: .normal("cow.wav")),
+                      to: device.deviceID)
+        .flatMapError { (err) -> EventLoopFuture<Void> in
             if let error = err as? APNSwiftError.ResponseError {
                 switch error {
                 case .badRequest(.badDeviceToken):

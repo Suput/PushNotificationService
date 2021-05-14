@@ -63,10 +63,12 @@ final class PushController {
     }
 
     func assemblyIOSDevice(_ req: Request, device: DeviceInfo, message: PushMessage) -> EventLoopFuture<Void> {
-        req.apns.send(
-            .init(title: message.title, subtitle: nil, body: message.message),
-            to: device.deviceID
-        ).flatMapError { (err) -> EventLoopFuture<Void> in
+        let alert = APNSwiftAlert(title: message.title, body: message.message)
+        return req.apns.send(.init(alert: alert,
+                                   badge: 0,
+                                   sound: .normal("cow.wav")),
+                      to: device.deviceID)
+            .flatMapError { (err) -> EventLoopFuture<Void> in
             if let error = err as? APNSwiftError.ResponseError {
                 switch error {
                 case .badRequest(.badDeviceToken):
