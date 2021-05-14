@@ -110,7 +110,7 @@ extension ConfigurationService {
                 teamIdentifier: apns.teamIdentifier
             ),
             topic: apns.topic,
-            environment: .sandbox
+            environment: app.environment.isRelease ? .production : .sandbox
         )
         app.apns.configuration?.timeout = .minutes(1)
     }
