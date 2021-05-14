@@ -133,10 +133,12 @@ extension ConfigurationService {
     }
     
     func redis(_ app: Application) throws {
+        let pool: RedisConfiguration.PoolOptions = .init(initialConnectionBackoffDelay: .seconds(3), connectionRetryTimeout: .minutes(1))
+        
         if let redisURL = Environment.get("REDIS_URL") {
-            app.redis.configuration = try RedisConfiguration(url: redisURL)
+            app.redis.configuration = try RedisConfiguration(url: redisURL, pool: pool)
         } else {
-            app.redis.configuration = try RedisConfiguration(hostname: redis.hostname)
+            app.redis.configuration = try RedisConfiguration(hostname: redis.hostname, pool: pool)
         }
     }
     
