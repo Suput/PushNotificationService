@@ -23,6 +23,7 @@ final class PushController {
             .group("push") { route in
                 
             route.post("user", use: pushToUser)
+            route.post("users", use: pushToUsers)
         }
     }
 
@@ -37,6 +38,30 @@ final class PushController {
 
         }.map {
             self.assemblyWebSocket(usersId: push.userID, message: push.push)
+        }
+
+        task.whenComplete { (_) in
+            req.logger.info("Notification requests completed")
+        }
+
+        return .ok
+    }
+    
+    func pushToUsers(_ req: Request) throws -> HTTPStatus {
+        let push = try req.content.decode(PushToUsersClient.self)
+        
+        if push.usersID.isEmpty {
+            return .notFound
+        }
+        
+        let task: EventLoopFuture<Void> = DeviceInfo.query(on: req.db).group(.or) { group in
+            push.usersID.forEach {group.filter(\.$user.$id == $0)}
+        }.all().flatMap { (devices) -> EventLoopFuture<Void> in
+
+            self.assemblyDevice(req, devices: devices, message: push.push).flatten(on: req.eventLoop)
+
+        }.map {
+            self.assemblyWebSocket(usersId: push.usersID, message: push.push)
         }
 
         task.whenComplete { (_) in

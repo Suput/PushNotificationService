@@ -12,6 +12,11 @@ struct PushToUserClient: Content {
     let push: PushMessage
 }
 
+struct PushToUsersClient: Content {
+    let usersID: [UUID]
+    let push: PushMessage
+}
+
 struct PushMessage: Content {
     let title: String
     let message: String
