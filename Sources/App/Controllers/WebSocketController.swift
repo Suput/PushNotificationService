@@ -18,10 +18,11 @@ class WebSocketController {
             if let userId = req.parameters.get("userId"), let uuid = UUID(uuidString: userId) {
                 wSocket.send("Connected")
 
-                self.sockets.append(.init(socket: wSocket, user: uuid))
-
+                let idConnection = UUID()
+                self.sockets.append(.init(id: idConnection, socket: wSocket, user: uuid))
+                
                 wSocket.onClose.map {
-                    self.sockets.removeAll { $0.user == uuid }
+                    self.sockets.removeAll { $0.id == idConnection }
                 }.whenComplete {_ in}
 
             } else {
