@@ -48,14 +48,13 @@ class RedisController {
             }
         }
         
-        
     }
     
-    func redisConnected(_ app: Application, connected: @escaping (RedisConnection) -> ()) throws {
+    func redisConnected(_ app: Application, connected: @escaping (RedisConnection) -> Void) throws {
         let eventLoop = app.eventLoopGroup.next()
         try RedisConnection.make(configuration: config.redisConfig(app),
                                  boundEventLoop: eventLoop)
-            .flatMapErrorThrowing{ error in
+            .flatMapErrorThrowing { error in
                 app.logger.error("Not redis connection: \(error.localizedDescription)")
                 throw ServerError.noRedisConnection
             }.map({ redis in

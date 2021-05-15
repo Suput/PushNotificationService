@@ -28,7 +28,7 @@ final class DeviceInfo: Model {
     @Field(key: "deviceID")
     var deviceID: String
     
-    @OptionalField(key: "init_date")
+    @Timestamp(key: "init_date", on: .update)
     var initDate: Date?
     
     init() {}
@@ -37,13 +37,11 @@ final class DeviceInfo: Model {
         self.type = type
         self.deviceID = deviceID
         self.$user.id = user.id!
-        self.initDate = Date()
     }
     
     init(device client: DeviceClient, user: UserDevices) {
         self.type = client.type
         self.deviceID = client.deviceID
         self.$user.id = user.id!
-        self.initDate = Date()
     }
 }

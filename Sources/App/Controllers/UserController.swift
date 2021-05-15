@@ -35,7 +35,6 @@ final class UserController {
                 if let device = deviceDB {
                     return device.$user.get(on: req.db).flatMap { userDB -> EventLoopFuture<HTTPStatus> in
                         if userDB.id == userID {
-                            device.initDate = Date()
                             
                             return device.update(on: req.db).map {.ok}
                         }
@@ -44,7 +43,6 @@ final class UserController {
                             .first().flatMap { findUser -> EventLoopFuture<HTTPStatus> in
                                 if let user = findUser {
                                     device.$user.id = user.id!
-                                    device.initDate = Date()
                                     
                                     return device.update(on: req.db).map {.ok}
                                 }
@@ -53,7 +51,6 @@ final class UserController {
                                 
                                 return newUser.create(on: req.db).flatMap {
                                     device.$user.id = newUser.id!
-                                    device.initDate = Date()
                                     
                                     return device.update(on: req.db).map {.ok}
                                 }

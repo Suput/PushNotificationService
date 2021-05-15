@@ -1,6 +1,6 @@
 //
 //  DeviceAddDate.swift
-//  
+//
 //
 //  Created by Mikhail Ivanov on 15.05.2021.
 //
