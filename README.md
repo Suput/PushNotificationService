@@ -44,12 +44,7 @@ Action | [![Build Status](https://dev.azure.com/rtuitlab/RTU%20IT%20Lab/_apis/bu
 
 Инструкция по генерации файла `APNs.p8`: [тык.](https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/establishing_a_certificate-based_connection_to_apns)
 
-### Debug пути
 Конфигурационный файл `settins.json` и `FCM.json` нужно разместить по пути `/Private/json/`. Файл `APNs.p8` - `/Private/`
-
-### Production пути
-***будут позже***
-###
 
 ## Запуск
 ### MacOS & Linux
@@ -87,6 +82,9 @@ vapor run serve
 docker-compose build
 docker-compose up
 ```
+
+При использовании `docker-compose` в файле `settings.json` может присутсвовать только поля `apns` и `jwkURL`
+
 Сервер будет доступен по `0.0.0.0:8080`
 
 ## Плагины для устройств
@@ -107,3 +105,4 @@ Fluent | https://github.com/vapor/fluent
 Fluent PostgreSQL | https://github.com/vapor/fluent-postgres-driver
 JWT | https://github.com/vapor/jwt
 Redis | https://github.com/vapor/redis
+Queues | https://github.com/vapor/queues

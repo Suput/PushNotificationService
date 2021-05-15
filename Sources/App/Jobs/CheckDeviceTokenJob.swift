@@ -12,7 +12,7 @@ import Queues
 struct CheckDeviceTokenJob: ScheduledJob {
     
     func run(context: QueueContext) -> EventLoopFuture<Void> {
-        context.application.logger.info("Start of job \"\(String(describing: CheckDeviceTokenJob.self))\"")
+        context.application.logger.info("Start of job \"\(name)\"")
         
         let oldDate = Calendar.current.date(byAdding: .month, value: -6, to: Date())!
         
@@ -26,7 +26,7 @@ struct CheckDeviceTokenJob: ScheduledJob {
             
             return context.eventLoop.makeSucceededVoidFuture()
         }.map {
-            context.application.logger.info("Completed job \"\(String(describing: CheckDeviceTokenJob.self))\"")
+            context.application.logger.info("Completed job \"\(name)\"")
         }
     }
 }
