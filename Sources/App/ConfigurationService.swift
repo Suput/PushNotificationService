@@ -172,7 +172,8 @@ extension ConfigurationService {
     private func migration(_ app: Application) {
         app.migrations.add(CreateDevice(),
                            CreateUser(),
-                           DeviceAddParentUser())
+                           DeviceAddParentUser(),
+                           DeviceAddDate())
         
         CreateTopicNotification().revert(on: app.db)
             .and(CreateUserTopic().revert(on: app.db))

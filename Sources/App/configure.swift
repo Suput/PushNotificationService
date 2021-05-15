@@ -20,6 +20,8 @@ public func configure(_ app: Application) throws {
         
         try routes(app, config: config)
         
+        try jobs(app)
+        
     } else {
         app.logger.critical("Missing config file")
         throw ServerError.missingConfiguration
