@@ -21,11 +21,15 @@ class WebSocketController {
                 let idConnection = UUID()
                 self.sockets.append(.init(id: idConnection, socket: wSocket, user: uuid))
                 
+                app.logger.info("websocket: User \(uuid.uuidString) connected. Connection ID: \(idConnection)")
+                
                 wSocket.onClose.map {
+                    app.logger.info("websocket: connection \(idConnection) closed")
                     self.sockets.removeAll { $0.id == idConnection }
                 }.whenComplete {_ in}
 
             } else {
+                app.logger.warning("websocket: Invalid user id")
                 wSocket.send("Invalid user id")
                 wSocket.close().whenComplete {_ in}
             }
