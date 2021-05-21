@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/vapor/apns.git",
         "state": {
           "branch": null,
-          "revision": "897389f19e9f5734acf70ad30ae169d383a59a15",
-          "version": "2.0.1"
+          "revision": "a880646364a7ce3cbe9dad1bd160b616467ea377",
+          "version": "2.1.0"
         }
       },
       {
@@ -258,8 +258,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "1e1a59542c8cbfe2e800883825c35063f3c36161",
-          "version": "4.45.2"
+          "revision": "91bbc66320f91c62e1888985e154d48526b944e9",
+          "version": "4.45.4"
         }
       },
       {
@@ -267,8 +267,8 @@
         "repositoryURL": "https://github.com/vapor/websocket-kit.git",
         "state": {
           "branch": null,
-          "revision": "2b06a70dfcfa76a2e5079f60e3ae911511f09db0",
-          "version": "2.1.2"
+          "revision": "a2d26b3de8b3be292f3208d1c74024f76ac503da",
+          "version": "2.1.3"
         }
       }
     ]
