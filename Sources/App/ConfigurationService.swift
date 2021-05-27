@@ -120,9 +120,10 @@ extension ConfigurationService {
         let cer = fileURL.appendingPathComponent(path, isDirectory: true)
             .appendingPathComponent("apns.crt.pem", isDirectory: false)
         
-        let env: APNSwiftConfiguration.Environment = app.environment == .production ? .production : .sandbox
+        
         let tls: APNSwiftConfiguration.AuthenticationMethod = try .tls(privateKeyPath: key.path,
                                                                         pemPath: cer.path)
+        let env: APNSwiftConfiguration.Environment = app.environment == .production ? .production : .sandbox
         
         app.apns.configuration = .init(authenticationMethod: tls, topic: apns.topic, environment: env)
         app.apns.configuration?.timeout = app.environment == .production ? .minutes(1) : .seconds(10)
@@ -186,30 +187,5 @@ extension ConfigurationService {
             }
             
         }
-    }
-}
-
-extension ECDSAKey {
-    
-    public static func `private`() throws -> JWTKit.ECDSAKey {
-        let directory = DirectoryConfiguration.detect()
-        
-        var path: String = "Private/"
-        
-        let file = "APNs.p8"
-        var fileURL = URL(fileURLWithPath: directory.workingDirectory)
-        
-        if let secretPath = Environment.get("PATH_SECRETS") {
-            path = secretPath
-            fileURL = fileURL.deletingLastPathComponent()
-        }
-        
-        fileURL = fileURL.appendingPathComponent(path, isDirectory: true)
-            .appendingPathComponent(file, isDirectory: false)
-        
-        guard let data = try? Data(contentsOf: fileURL) else {
-            throw APNSwiftError.SigningError.certificateFileDoesNotExist
-        }
-        return try .private(pem: data)
     }
 }
