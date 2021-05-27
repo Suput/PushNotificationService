@@ -125,7 +125,7 @@ extension ConfigurationService {
                                                                         pemPath: cer.path)
         
         app.apns.configuration = .init(authenticationMethod: tls, topic: apns.topic, environment: env)
-        app.apns.configuration?.timeout = .seconds(10)
+        app.apns.configuration?.timeout = app.environment == .production ? .minutes(1) : .seconds(10)
     }
     
     func redisConfig(_ app: Application) throws -> RedisConnection.Configuration {
