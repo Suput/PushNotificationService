@@ -58,8 +58,7 @@ struct ConfigurationService: Content {
 
 extension ConfigurationService {
     struct APNsKey: Content {
-        let keyIdentifier: String
-        let teamIdentifier: String
+        let keyPass: String
         let topic: String
     }
     
@@ -120,9 +119,9 @@ extension ConfigurationService {
         let cer = fileURL.appendingPathComponent(path, isDirectory: true)
             .appendingPathComponent("apns.crt.pem", isDirectory: false)
         
-        
         let tls: APNSwiftConfiguration.AuthenticationMethod = try .tls(privateKeyPath: key.path,
-                                                                        pemPath: cer.path)
+                                                                        pemPath: cer.path,
+                                                                        pemPassword: Array(apns.keyPass.utf8))
         let env: APNSwiftConfiguration.Environment = app.environment == .production ? .production : .sandbox
         
         app.apns.configuration = .init(authenticationMethod: tls, topic: apns.topic, environment: env)
