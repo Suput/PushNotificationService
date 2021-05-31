@@ -165,7 +165,7 @@ enum RedisError: Error {
 }
 
 extension RedisError: LocalizedError {
-    public var statusCode: Int? {
+    public var statusCode: Int {
         switch self {
         case .incorrectMessage:
             return 400
@@ -185,9 +185,6 @@ extension RedisError: LocalizedError {
     }
     
     func getJson() -> String? {
-        guard let statusCode = self.statusCode else {
-            return nil
-        }
         
         let data = Data(statusCode: statusCode, message: localizedDescription)
         let encoder = JSONEncoder()
