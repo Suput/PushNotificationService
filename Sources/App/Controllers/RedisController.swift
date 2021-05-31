@@ -159,7 +159,7 @@ class RedisController {
             }
         
         let socketsUsers = websocket.sockets.map {$0.userId}
-        let notUsers = usersId.filter { !sockets.contains($0) }
+        let notUsers = usersId.filter { !socketsUsers.contains($0) }
         
         if !notUsers.isEmpty {
             self.errorRedis(message: .noUsersFound(id: notUsers))
