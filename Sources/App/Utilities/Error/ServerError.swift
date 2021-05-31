@@ -1,6 +1,6 @@
 //
 //  ServerError.swift
-//  
+//
 //
 //  Created by Mikhail Ivanov on 31.05.2021.
 //

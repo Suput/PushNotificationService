@@ -19,7 +19,7 @@ class WebSocketController {
                 wSocket.send("Connected")
 
                 let idConnection = UUID()
-                self.sockets.append(.init(id: idConnection, socket: wSocket, user: uuid))
+                self.sockets.append(.init(id: idConnection, socket: wSocket, userId: uuid))
                 
                 app.logger.info("websocket: User \(uuid.uuidString) connected. Connection ID: \(idConnection)")
                 

@@ -150,12 +150,19 @@ class RedisController {
     }
     
     func assemblyWebSocket(usersId: [UUID], message: RedisPushMessageModel) {
-        websocket.sockets.filter {usersId.contains($0.user)}
+        websocket.sockets.filter {usersId.contains($0.userId)}
             .forEach { wSocket in
                 if let jsonData = try? JSONEncoder().encode(message) {
                     let jsonString = String(data: jsonData, encoding: .utf8)!
                     wSocket.socket.send(jsonString)
                 }
             }
+        
+        let socketsUsers = websocket.sockets.map {$0.userId}
+        let notUsers = usersId.filter { !sockets.contains($0) }
+        
+        if !notUsers.isEmpty {
+            self.errorRedis(message: .noUsersFound(id: notUsers))
+        }
     }
 }

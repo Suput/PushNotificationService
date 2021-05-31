@@ -1,6 +1,6 @@
 //
 //  RedisError.swift
-//  
+//
 //
 //  Created by Mikhail Ivanov on 31.05.2021.
 //
@@ -9,6 +9,8 @@ import Foundation
 
 enum RedisError: Error {
     case incorrectMessage
+    case noUsersFound(id: [UUID])
+
 }
 
 extension RedisError: LocalizedError {
@@ -16,13 +18,19 @@ extension RedisError: LocalizedError {
         switch self {
         case .incorrectMessage:
             return 400
+        case .noUsersFound(_):
+            return 404
         }
     }
+    
     public var errorDescription: String? {
         switch self {
         case .incorrectMessage:
             return NSLocalizedString("Incorrect message received",
                                      comment: "Incorrect message")
+        case .noUsersFound(let users):
+            return NSLocalizedString("No users found: \(users)",
+                                     comment: "No users found")
         }
     }
     

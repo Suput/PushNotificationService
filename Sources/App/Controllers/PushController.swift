@@ -129,7 +129,7 @@ final class PushController {
     }
 
     func assemblyWebSocket(usersId: [UUID], message: PushMessage) {
-        websocket.sockets.filter {usersId.contains($0.user)}
+        websocket.sockets.filter {usersId.contains($0.userId)}
             .forEach { wSocket in
                 if let jsonData = try? JSONEncoder().encode(message) {
                     let jsonString = String(data: jsonData, encoding: .utf8)!
