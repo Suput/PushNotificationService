@@ -13,53 +13,66 @@ import Redis
 
 class RedisController {
     
+    private let errorChannel: RedisChannelName = "errorInfo"
+    private let pushChannel: RedisChannelName = "pushInfo"
+    
     let websocket: WebSocketController
     let config: ConfigurationService
+    
+    var publishRedis: RedisConnection?
     
     init(_ app: Application, websocket: WebSocketController, config: ConfigurationService) throws {
         
         self.websocket = websocket
         self.config = config
+        self.publishRedis = try redisConnected(app)
         
-        try redisConnected(app) { redis in
-            redis.subscribe(to: "pushInfo") { channel, message in
-                switch channel {
-                case "pushInfo" :
-                    app.logger.info("redis: Message is received")
-                    if let mess = message.string?.data(using: .utf8) {
-                        do {
-                            let result = try JSONDecoder().decode(RedisPushModel.self, from: mess)
-                            
-                            try self.pushToUsers(app, model: result).whenSuccess {}
-                            
-                        } catch {
-                            app.logger.error("redis: Incorrect message")
-                        }
+        let redis = try redisConnected(app)
+        
+        redis.subscribe(to: pushChannel) { channel, message in
+            switch channel {
+            case "pushInfo" :
+                app.logger.info("redis: Message is received")
+                if let mess = message.string?.data(using: .utf8) {
+                    do {
+                        let result = try JSONDecoder().decode(RedisPushModel.self, from: mess)
+                        
+                        try self.pushToUsers(app, model: result).whenSuccess {}
+                        
+                    } catch {
+                        app.logger.error("redis: Incorrect message")
+                        
+                        self.errorRedis(message: .incorrectMessage)
                     }
-                default: break
                 }
-            }.whenComplete { result in
-                switch result {
-                case .success():
-                    app.logger.info("Redis subscribe")
-                case .failure(let error):
-                    app.logger.error("redis: \(error.localizedDescription)")
-                }
+            default: break
+            }
+        }.whenComplete { result in
+            switch result {
+            case .success():
+                app.logger.info("Redis subscribe")
+            case .failure(let error):
+                app.logger.error("redis: \(error.localizedDescription)")
             }
         }
-        
     }
     
-    func redisConnected(_ app: Application, connected: @escaping (RedisConnection) -> Void) throws {
+    func redisConnected(_ app: Application) throws -> RedisConnection {
         let eventLoop = app.eventLoopGroup.next()
-        try RedisConnection.make(configuration: config.redisConfig(app),
+        
+        return try RedisConnection.make(configuration: config.redisConfig(app),
                                  boundEventLoop: eventLoop)
             .flatMapErrorThrowing { error in
                 app.logger.error("Not redis connection: \(error.localizedDescription)")
                 throw ServerError.noRedisConnection
-            }.map({ redis in
-                connected(redis)
-            }).wait()
+            }.wait()
+    }
+    
+    func errorRedis(message: RedisError) {
+        if let redis = self.publishRedis,
+           let error = message.getJson() {
+            redis.publish(error, to: self.errorChannel)
+        }
     }
     
     func pushToUsers(_ app: Application, model: RedisPushModel) throws -> EventLoopFuture<Void> {
@@ -144,5 +157,47 @@ class RedisController {
                     wSocket.socket.send(jsonString)
                 }
             }
+    }
+}
+
+enum RedisError: Error {
+    case incorrectMessage
+}
+
+extension RedisError: LocalizedError {
+    public var statusCode: Int? {
+        switch self {
+        case .incorrectMessage:
+            return 400
+        }
+    }
+    public var errorDescription: String? {
+        switch self {
+        case .incorrectMessage:
+            return NSLocalizedString("Incorrect message received",
+                                     comment: "Incorrect message")
+        }
+    }
+    
+    private struct Data: Codable {
+        var statusCode: Int
+        var message: String
+    }
+    
+    func getJson() -> String? {
+        guard let statusCode = self.statusCode else {
+            return nil
+        }
+        
+        let data = Data(statusCode: statusCode, message: localizedDescription)
+        let encoder = JSONEncoder()
+        
+        if let jsonData = try? encoder.encode(data) {
+            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                return jsonString
+            }
+        }
+        
+       return nil
     }
 }
