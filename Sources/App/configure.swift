@@ -3,6 +3,14 @@ import Vapor
 // configures your application
 public func configure(_ app: Application) throws {
     
+    if app.environment == .testing {
+        let socket = WebSocketController(app)
+        
+        _ = try RedisController(app, websocket: socket, config: nil)
+        
+        return
+    }
+    
     if let config = ConfigurationService.loadSettings() {
         app.logger.info("Configuration service")
         

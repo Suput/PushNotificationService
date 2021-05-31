@@ -17,11 +17,11 @@ class RedisController {
     private let pushChannel: RedisChannelName = "pushInfo"
     
     let websocket: WebSocketController
-    let config: ConfigurationService
+    let config: ConfigurationService?
     
     var publishRedis: RedisConnection?
     
-    init(_ app: Application, websocket: WebSocketController, config: ConfigurationService) throws {
+    init(_ app: Application, websocket: WebSocketController, config: ConfigurationService?) throws {
         
         self.websocket = websocket
         self.config = config
@@ -60,12 +60,25 @@ class RedisController {
     func redisConnected(_ app: Application) throws -> RedisConnection {
         let eventLoop = app.eventLoopGroup.next()
         
-        return try RedisConnection.make(configuration: config.redisConfig(app),
-                                 boundEventLoop: eventLoop)
-            .flatMapErrorThrowing { error in
-                app.logger.error("Not redis connection: \(error.localizedDescription)")
-                throw ServerError.noRedisConnection
-            }.wait()
+        if let config = config {
+            return try RedisConnection.make(configuration: config.redisConfig(app),
+                                            boundEventLoop: eventLoop)
+                .flatMapErrorThrowing { error in
+                    app.logger.error("Not redis connection: \(error.localizedDescription)")
+                    throw ServerError.noRedisConnection
+                }.wait()
+            
+        } else if app.environment == .testing,
+                  let url = Environment.get("REDIS_URL") {
+            return try RedisConnection.make(configuration: .init(url: url),
+                                            boundEventLoop: eventLoop)
+                .flatMapErrorThrowing { error in
+                    app.logger.error("Not redis connection: \(error.localizedDescription)")
+                    throw ServerError.noRedisConnection
+                }.wait()
+        }
+        
+        throw ServerError.missingConfiguration
     }
     
     func errorRedis(message: RedisError) {
@@ -77,7 +90,13 @@ class RedisController {
     
     func pushToUsers(_ app: Application, model: RedisPushModel) throws -> EventLoopFuture<Void> {
         
-        DeviceInfo.query(on: app.db).group(.or) { group in
+        if app.environment == .testing {
+            return app.eventLoopGroup.future().map {
+                self.assemblyWebSocket(usersId: model.users, message: model.message)
+            }
+        }
+        
+        return DeviceInfo.query(on: app.db).group(.or) { group in
             model.users.forEach {group.filter(\.$user.$id == $0)}
         }.all().flatMap { devices -> EventLoopFuture<Void> in
             self.assemblyDevice(app, devices: devices, message: model.message).flatten(on: app.eventLoopGroup.next())
