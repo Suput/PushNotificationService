@@ -8,6 +8,7 @@
 import Vapor
 
 struct WebSocketConnectionModel {
+    var id: UUID
     var socket: WebSocket
-    var user: UUID
+    var userId: UUID
 }

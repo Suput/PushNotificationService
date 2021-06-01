@@ -12,8 +12,8 @@ struct PushToUserClient: Content {
     let push: PushMessage
 }
 
-struct PushToTopicClient: Content {
-    let topicID: UUID
+struct PushToUsersClient: Content {
+    let usersID: [UUID]
     let push: PushMessage
 }
 

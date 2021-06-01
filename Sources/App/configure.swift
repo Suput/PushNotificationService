@@ -3,6 +3,14 @@ import Vapor
 // configures your application
 public func configure(_ app: Application) throws {
     
+    if app.environment == .testing {
+        let socket = WebSocketController(app)
+        
+        _ = try RedisController(app, websocket: socket, config: nil)
+        
+        return
+    }
+    
     if let config = ConfigurationService.loadSettings() {
         app.logger.info("Configuration service")
         
@@ -15,31 +23,16 @@ public func configure(_ app: Application) throws {
         // Postgres configuration
         try config.postgres(app)
         
-        // Redis configuration
-        try config.redis(app)
-        
         // JWKs configuration
         try config.jwt(app)
+        
+        try routes(app, config: config)
+        
+        try jobs(app)
         
     } else {
         app.logger.critical("Missing config file")
         throw ServerError.missingConfiguration
     }
     
-    try routes(app)
-}
-
-enum ServerError: Error {
-    case missingConfiguration
-}
-
-extension ServerError: LocalizedError {
-    public var errorDescription: String? {
-        switch self {
-        case .missingConfiguration:
-            return NSLocalizedString("There is no settings.json file," +
-                                        "in which the main server configuration is written",
-                                     comment: "Config file missing")
-        }
-    }
 }

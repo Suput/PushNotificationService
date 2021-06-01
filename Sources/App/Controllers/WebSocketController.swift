@@ -18,13 +18,18 @@ class WebSocketController {
             if let userId = req.parameters.get("userId"), let uuid = UUID(uuidString: userId) {
                 wSocket.send("Connected")
 
-                self.sockets.append(.init(socket: wSocket, user: uuid))
-
+                let idConnection = UUID()
+                self.sockets.append(.init(id: idConnection, socket: wSocket, userId: uuid))
+                
+                app.logger.info("websocket: User \(uuid.uuidString) connected. Connection ID: \(idConnection)")
+                
                 wSocket.onClose.map {
-                    self.sockets.removeAll { $0.user == uuid }
+                    app.logger.info("websocket: connection \(idConnection) closed")
+                    self.sockets.removeAll { $0.id == idConnection }
                 }.whenComplete {_ in}
 
             } else {
+                app.logger.warning("websocket: Invalid user id")
                 wSocket.send("Invalid user id")
                 wSocket.close().whenComplete {_ in}
             }

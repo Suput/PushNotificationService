@@ -1,6 +1,6 @@
 import Vapor
 
-func routes(_ app: Application) throws {
+func routes(_ app: Application, config: ConfigurationService) throws {
 
     app.get { _ -> String in
         return "I'm push service"
@@ -12,5 +12,5 @@ func routes(_ app: Application) throws {
 
     _ = PushController(app, websocket: socket)
 
-    _ = try RedisController(app, websocket: socket)
+    _ = try RedisController(app, websocket: socket, config: config)
 }

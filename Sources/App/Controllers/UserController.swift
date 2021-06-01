@@ -35,7 +35,8 @@ final class UserController {
                 if let device = deviceDB {
                     return device.$user.get(on: req.db).flatMap { userDB -> EventLoopFuture<HTTPStatus> in
                         if userDB.id == userID {
-                            return req.eventLoop.makeSucceededFuture(HTTPStatus.ok)
+                            
+                            return device.update(on: req.db).map {.ok}
                         }
                         
                         return UserDevices.query(on: req.db).filter(\.$id == userID)

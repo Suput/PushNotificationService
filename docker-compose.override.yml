@@ -25,6 +25,8 @@ secrets:
         file: "${BACK_PUSH_SERVICE_CONTEXT:-.}/Private/json/settings.json"
     FCM.json:
         file: "${BACK_PUSH_SERVICE_CONTEXT:-.}/Private/json/FCM.json"
-    APNs.p8:
-        file: "${BACK_PUSH_SERVICE_CONTEXT:-.}/Private/APNs.p8"
+    apns.crt.pem:
+        file: "${BACK_PUSH_SERVICE_CONTEXT:-.}/Private/APNs/apns.crt.pem"
+    apns.key.pem:
+        file: "${BACK_PUSH_SERVICE_CONTEXT:-.}/Private/APNs/apns.key.pem"
 

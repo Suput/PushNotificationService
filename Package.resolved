@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/vapor/apns.git",
         "state": {
           "branch": null,
-          "revision": "897389f19e9f5734acf70ad30ae169d383a59a15",
-          "version": "2.0.1"
+          "revision": "a880646364a7ce3cbe9dad1bd160b616467ea377",
+          "version": "2.1.0"
         }
       },
       {
@@ -60,8 +60,8 @@
         "repositoryURL": "https://github.com/vapor/fluent.git",
         "state": {
           "branch": null,
-          "revision": "4004e926cdef1fbb937501c8a60554349cced675",
-          "version": "4.2.0"
+          "revision": "c67c33ad788445406a5bf6a63880229e5f580577",
+          "version": "4.3.0"
         }
       },
       {
@@ -69,8 +69,8 @@
         "repositoryURL": "https://github.com/vapor/fluent-kit.git",
         "state": {
           "branch": null,
-          "revision": "ea23e12404dc3a598dd8f3084650550d2b6b1ac5",
-          "version": "1.12.0"
+          "revision": "e22fb0973725b662319fd4a7365988f1ae796e27",
+          "version": "1.12.1"
         }
       },
       {
@@ -125,6 +125,15 @@
           "branch": null,
           "revision": "33eea144f465a48b17f4c63573c40d33824fdde4",
           "version": "1.5.2"
+        }
+      },
+      {
+        "package": "queues",
+        "repositoryURL": "https://github.com/vapor/queues.git",
+        "state": {
+          "branch": null,
+          "revision": "9418af49ca3ca779c2fab7aa0cedecb1aa6779b6",
+          "version": "1.5.1"
         }
       },
       {
@@ -249,8 +258,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "1e1a59542c8cbfe2e800883825c35063f3c36161",
-          "version": "4.45.2"
+          "revision": "9d154df6214a1d6027f04a495e8981bac49224da",
+          "version": "4.45.6"
         }
       },
       {
@@ -258,8 +267,8 @@
         "repositoryURL": "https://github.com/vapor/websocket-kit.git",
         "state": {
           "branch": null,
-          "revision": "2b06a70dfcfa76a2e5079f60e3ae911511f09db0",
-          "version": "2.1.2"
+          "revision": "a2d26b3de8b3be292f3208d1c74024f76ac503da",
+          "version": "2.1.3"
         }
       }
     ]

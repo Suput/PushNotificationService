@@ -13,15 +13,23 @@ import Redis
 
 class RedisController {
     
-    let websocket: WebSocketController
+    private let errorChannel: RedisChannelName = "errorInfo"
+    private let pushChannel: RedisChannelName = "pushInfo"
     
-    init(_ app: Application, websocket: WebSocketController) throws {
+    let websocket: WebSocketController
+    let config: ConfigurationService?
+    
+    var publishRedis: RedisConnection?
+    
+    init(_ app: Application, websocket: WebSocketController, config: ConfigurationService?) throws {
         
         self.websocket = websocket
+        self.config = config
+        self.publishRedis = try redisConnected(app)
         
-        try app.boot() // TODO: We have to wait for the Redis package update
+        let redis = try redisConnected(app)
         
-        app.redis.subscribe(to: "pushInfo") { channel, message in
+        redis.subscribe(to: pushChannel) { channel, message in
             switch channel {
             case "pushInfo" :
                 app.logger.info("redis: Message is received")
@@ -33,6 +41,8 @@ class RedisController {
                         
                     } catch {
                         app.logger.error("redis: Incorrect message")
+                        
+                        self.errorRedis(message: .incorrectMessage)
                     }
                 }
             default: break
@@ -45,12 +55,48 @@ class RedisController {
                 app.logger.error("redis: \(error.localizedDescription)")
             }
         }
+    }
+    
+    func redisConnected(_ app: Application) throws -> RedisConnection {
+        let eventLoop = app.eventLoopGroup.next()
         
+        if let config = config {
+            return try RedisConnection.make(configuration: config.redisConfig(app),
+                                            boundEventLoop: eventLoop)
+                .flatMapErrorThrowing { error in
+                    app.logger.error("Not redis connection: \(error.localizedDescription)")
+                    throw ServerError.noRedisConnection
+                }.wait()
+            
+        } else if app.environment == .testing,
+                  let url = Environment.get("REDIS_URL") {
+            return try RedisConnection.make(configuration: .init(url: url),
+                                            boundEventLoop: eventLoop)
+                .flatMapErrorThrowing { error in
+                    app.logger.error("Not redis connection: \(error.localizedDescription)")
+                    throw ServerError.noRedisConnection
+                }.wait()
+        }
+        
+        throw ServerError.missingConfiguration
+    }
+    
+    func errorRedis(message: RedisError) {
+        if let redis = self.publishRedis,
+           let error = message.getJson() {
+            redis.publish(error, to: self.errorChannel)
+        }
     }
     
     func pushToUsers(_ app: Application, model: RedisPushModel) throws -> EventLoopFuture<Void> {
         
-        DeviceInfo.query(on: app.db).group(.or) { group in
+        if app.environment == .testing {
+            return app.eventLoopGroup.future().map {
+                self.assemblyWebSocket(usersId: model.users, message: model.message)
+            }
+        }
+        
+        return DeviceInfo.query(on: app.db).group(.or) { group in
             model.users.forEach {group.filter(\.$user.$id == $0)}
         }.all().flatMap { devices -> EventLoopFuture<Void> in
             self.assemblyDevice(app, devices: devices, message: model.message).flatten(on: app.eventLoopGroup.next())
@@ -81,22 +127,24 @@ class RedisController {
     
     func assemblyIOSDevice(_ app: Application, device: DeviceInfo, message: RedisPushMessageModel)
     -> EventLoopFuture<Void> {
-        app.apns.send(
-            .init(title: message.title, subtitle: nil, body: message.body),
-            to: device.deviceID
-        ).flatMapError { (err) -> EventLoopFuture<Void> in
-            if let error = err as? APNSwiftError.ResponseError {
-                switch error {
-                case .badRequest(.badDeviceToken):
-                    app.logger.info("Device \(String(describing: device.id!)) of type iOS has been removed from the database")
-                    return device.delete(on: app.db)
-                default:
-                    break
+        let alert = APNSwiftAlert(title: message.title, body: message.body)
+        return app.apns.send(.init(alert: alert,
+                                   badge: 0,
+                                   sound: .normal("cow.wav")),
+                             to: device.deviceID)
+            .flatMapError { (err) -> EventLoopFuture<Void> in
+                if let error = err as? APNSwiftError.ResponseError {
+                    switch error {
+                    case .badRequest(.badDeviceToken):
+                        app.logger.info("Device \(String(describing: device.id!)) of type iOS has been removed from the database")
+                        return device.delete(on: app.db)
+                    default:
+                        break
+                    }
                 }
+                
+                return app.eventLoopGroup.future()
             }
-            
-            return app.eventLoopGroup.future()
-        }
     }
     
     func assemblyAndroidDevice(_ app: Application, device: DeviceInfo, message: RedisPushMessageModel)
@@ -121,12 +169,19 @@ class RedisController {
     }
     
     func assemblyWebSocket(usersId: [UUID], message: RedisPushMessageModel) {
-        websocket.sockets.filter {usersId.contains($0.user)}
+        websocket.sockets.filter {usersId.contains($0.userId)}
             .forEach { wSocket in
                 if let jsonData = try? JSONEncoder().encode(message) {
                     let jsonString = String(data: jsonData, encoding: .utf8)!
                     wSocket.socket.send(jsonString)
                 }
             }
+        
+        let socketsUsers = websocket.sockets.map {$0.userId}
+        let notUsers = usersId.filter { !socketsUsers.contains($0) }
+        
+        if !notUsers.isEmpty {
+            self.errorRedis(message: .noUsersFound(id: notUsers))
+        }
     }
 }

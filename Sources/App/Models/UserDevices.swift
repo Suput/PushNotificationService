@@ -18,9 +18,6 @@ final class UserDevices: Model {
     @Children(for: \.$user)
     var devices: [DeviceInfo]
 
-    @Siblings(through: UserTopic.self, from: \.$user, to: \.$topic)
-    public var topics: [TopicNotification]
-
     init() {}
 
     init(id: UUID?) {
