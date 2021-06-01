@@ -1,0 +1,25 @@
+version: "3.7"
+
+services:
+  push-service:
+    environment:
+      REDIS_URL: redis://redis:6379
+    build:
+      context: ${BACK_PUSH_SERVICE_CONTEXT:-.}/
+    ports:
+      - ${ITLAB_PUSH_SERVICE_PORT:-8080}:${ITLAB_PUSH_SERVICE_PORT:-8080}
+    command:
+      [
+        "serve",
+        "--env",
+        "test",
+        "--hostname",
+        "0.0.0.0",
+        "--port",
+        "${ITLAB_PUSH_SERVICE_PORT:-8080}",
+      ]
+
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379

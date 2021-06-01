@@ -46,6 +46,17 @@ Action | [![Build Status](https://dev.azure.com/rtuitlab/RTU%20IT%20Lab/_apis/bu
 Конфигурационный файл `settins.json` и `FCM.json` нужно разместить по пути `/Private/json/`. Файл `apns.crt.pem` и `apns.key.pem` - `/Private/APNs/`
 
 ## Запуск
+
+### Запуск тестирования
+> For linux
+```bash
+./start_test.sh up --build
+```
+
+> For windows
+```bash
+.\start_test.ps1 up --build
+```
 ### MacOS & Linux
 #### MacOS
 Для запуска проекта через терминал на MacOS потребуется установка [Vapor](https://docs.vapor.codes/4.0/install/macos/)
