@@ -2,6 +2,7 @@ version: '3.7'
 
 services:
   push-service:
+    image: registry.rtuitlab.dev/rtuitlab/itlab-push-service:${ITLAB_SERVICE_TAG-latest}
     environment:
       - POSTGRES_URL=${ITLAB_PUSH_SERVICE_DB?Provice postgres connection string ITLAB_PUSH_SERVICE_DB}
       - REDIS_URL=${ITLAB_PUSH_SERVICE_REDIS:-redis://localhost:6379}
